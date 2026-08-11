@@ -1,91 +1,32 @@
-$(document).ready(function () {
-  const $iframe  = $('.virtual-tour__iframe');
-  const $wrapper = $('.virtual-tour__iframe-wrapper');
-  const $cta     = $('.virtual-tour__cta-button');
-  const $close   = $('.virtual-tour__iframe-close');
+$(window).on('resize orientationchange', function(event) {
+    event.preventDefault();
 
-  // Component not on this page — bind nothing.
-  if (!$cta.length && !$iframe.length) {
-    return;
-  }
+    if(src){
+      $('.virtual-tour__iframe').hide();
 
-  let src = '',
-      width = '',
-      height = '',
-      resizeTimer = null;
+      setTimeout(function(){
+        width = $('.virtual-tour__iframe-wrapper').width();
+        height = $('.virtual-tour__iframe-wrapper').height();
 
-  function isMobileViewport() {
-    return window.matchMedia('(max-width: 992px)').matches;
-  }
+        $('.virtual-tour__iframe').attr('width', width);
+        $('.virtual-tour__iframe').attr('height', height);
 
-  function sanitizeUrl(url) {
-    try {
-      const parsed = new URL(url, window.location.origin);
-      if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
-        return parsed.href;
-      }
-    } catch (e) {
-      return '';
-    }
-    return '';
-  }
+        // Show as soon as the tour has actually loaded
+        $('.virtual-tour__iframe')
+          .off('load.vpt')
+          .one('load.vpt', function () {
+            clearTimeout(showTimer);
+            $('.virtual-tour__iframe').show();
+          });
 
-  // click, Enter or Space
-  function isActivation(e) {
-    return e.type === 'click' || e.keyCode === 13 || e.keyCode === 32;
-  }
+        $('.virtual-tour__iframe').prop('src', src);
 
-  $cta.on('click keydown', function (e) {
-    if (!isActivation(e)) {
-      return;
-    }
-    e.preventDefault();
+        // Fallback, same 1000ms as before
+        clearTimeout(showTimer);
+        showTimer = setTimeout(function(){
+          $('.virtual-tour__iframe').off('load.vpt').show();
+        }, 1000);
 
-    if (isMobileViewport()) {
-      $('body').addClass('vpt-open');
-    }
-
-    src = sanitizeUrl($iframe.attr('data-src'));
-
-    if (src) {
-      width  = $wrapper.width();
-      height = $wrapper.height();
-      $iframe.attr({ width: width, height: height }).prop('src', src);
-    }
-
-    $wrapper.show();
-  });
-
-  $close.on('click keydown', function (e) {
-    if (!isActivation(e)) {
-      return;
-    }
-    $wrapper.hide();
-
-    if (isMobileViewport()) {
-      $('body').removeClass('vpt-open');
-    }
-  });
-
-  $(window).off('resize.vpt orientationchange.vpt')
-    .on('resize.vpt orientationchange.vpt', function () {
-      if (!src) {
-        return;
-      }
-
-      $iframe.hide();
-
-      // Debounced: one reload per resize gesture instead of one per event.
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(function () {
-        width  = $wrapper.width();
-        height = $wrapper.height();
-
-        $iframe.attr({ width: width, height: height }).prop('src', src);
-
-        setTimeout(function () {
-          $iframe.show();
-        }, 900);
       }, 100);
-    });
-});
+    }
+  });
