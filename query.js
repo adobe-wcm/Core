@@ -1,59 +1,34 @@
-window.onYouTubeIframeAPIReady_cookiePolicy = function() {
-    if (typeof OnetrustActiveGroups === 'undefined' ||
-        OnetrustActiveGroups == null ||
-        !OnetrustActiveGroups.includes('C0004')) {
-        return;
-    }
+// Build the image+button overlay with DOM APIs (no innerHTML).
+var holder = document.createElement('div');
+holder.className = 'holder-yt';
 
-    if (window.__degYtPlayersInitialized) {
-        return;
-    }
+var titleDiv = document.createElement('div');
+titleDiv.id = id + '_title';
+holder.appendChild(titleDiv);
 
-    var createPlayers = function() {
-        if (window.__degYtPlayersInitialized) {
-            return;
-        }
+var link = document.createElement('a');
+link.href = '#';
+link.id = 'cat-youtubevid-' + id;
+(function (vidId, vw, vh) {
+    link.addEventListener('click', function (e) {
+        e.preventDefault();
+        LoadYoutubeVidOnPreviewClick(vidId, vw, vh);
+    });
+})(id, w, h);
 
-        var $gallery = $('.pdp-gallery iframe');
-        var $technology = $('.technology iframe');
+var img = document.createElement('img');
+img.src = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+img.alt = '';
+img.style.width = w + 'px';
+img.style.height = h + 'px';
+link.appendChild(img);
 
-        // Don't latch the flag on pages with no videos (scenario M)
-        if (!$gallery.length && !$technology.length) {
-            return;
-        }
+var playBtn = document.createElement('div');
+playBtn.setAttribute('style', YT_PLAY_BTN_STYLE);
+link.appendChild(playBtn);
 
-        window.__degYtPlayersInitialized = true;
+holder.appendChild(link);
 
-        /* ytplayer for pdpGallery */
-        $gallery.each(function (index, value) {
-            /* >>> PASTE EXISTING BODY FROM LINES 470-489, UNCHANGED <<< */
-        });
-
-        /* ytplayer for pdpTechnology */
-        $technology.each(function (index, value) {
-            /* >>> PASTE EXISTING BODY FROM LINES 492-507, UNCHANGED <<< */
-        });
-    };
-
-    if (window.YT && window.YT.Player) {
-        createPlayers();
-        return;
-    }
-
-    var previousReady = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = function() {
-        if (typeof previousReady === 'function') {
-            previousReady();
-        }
-        createPlayers();
-    };
-
-    // This code loads the IFrame Player API code asynchronously.
-    // validation to prevent load the script multiple times
-    if (!$('script[src="https://www.youtube.com/iframe_api"]').length) {
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    }
-};
+// Replace the iframe with the image+button node.
+frame.parentNode.replaceChild(holder, frame);
+i--;
