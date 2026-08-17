@@ -1,239 +1,203 @@
-PROBLEM STATEMENT
-Goals and Outcome from Analysis
-The goal of this activity was to validate all previously implemented updates across PDP-related components by enabling them together on a single PDP page, rather than testing them individually. This combined validation ensures that shared clientlibs and interdependent components work seamlessly without conflicts or regressions. The outcome confirmed that the PDP page loads successfully with all updated components functioning as expected, with no JavaScript errors, console warnings, runtime issues, or broken dependencies observed. Additionally, existing PDP functionalities — such as page rendering, component interactions, and user behaviors — were not impacted. However, the performance improvements observed on Class, Family, and Sub-family pages were [not reproduced / partially reproduced — confirm] on the PDP, and the analysis below documents the contributing factors.
-Scope of Analysis
-Background
+rom combining the component changes.
+# 2881905 — FS | Investigation and POC | SEO | Re-evaluate Component-level JavaScript Review for Product Components Together
+
+# PROBLEM STATEMENT
+
+## Goals and Outcome from Analysis
+
+The goal of this activity was to validate all previously implemented updates across PDP-related components by enabling them together on a single PDP page, rather than testing them individually. This combined validation ensures that shared clientlibs and interdependent components work seamlessly without conflicts or regressions.
+
+During the investigation it was identified that 4 of the 13 in-scope components are not authored on the standard PDP page. To validate them under the same page-level conditions as the remaining components, the PDP template was temporarily updated to include these components, allowing console output and performance to be observed with the complete component set present.
+
+As part of the POC, unused libraries were removed and performance-related fixes were applied across several Product components. The outcome confirmed that the PDP page loads successfully with all updated components functioning as expected, with no JavaScript errors, console warnings, runtime issues, or broken dependencies observed, and existing PDP functionality — page rendering, component interactions, and user behaviors — was not impacted. However, these component-level changes did not produce a significant improvement in overall page performance. The analysis indicates that meaningful gains on the PDP require site-level changes, which are proposed in the *Recommendation and Next Steps* section below.
+
+## Scope of Analysis
+
+### Background
+
 As part of 1895384 and 1918024, code changes were individually applied and validated on multiple PDP-related components to address the identified issue. Each component was tested in isolation and behaved as expected as part of that investigation.
+
 During our internal demo call, it was highlighted that since the Product components coexist on the PDP and often share clientlibs, there is a risk of unexpected conflicts or regressions when all changes are deployed together.
+
 To mitigate this risk, an integrated validation approach is required by enabling the changes across all relevant PDP components simultaneously and validating them at page level, put together.
+
 As part of 2719317, code changes were applied together and validated on multiple PDP-related components. Each component was tested individually, and then all components were also tested together. However, after combining all the product component changes, the expected performance improvements seen on Class, Family, and Sub-family pages were not observed on the PDP pages. This was identified during the investigation phase.
-Requirements
-Enable the previously investigated updates on all Product components together in the PDP page.
-Ensure no component is tested in isolation for this validation phase.
-Validate that the PDP page loads successfully with all updated components enabled.
-Ensure there are no JavaScript errors, console warnings, runtime failures, or broken clientlibs.
-Performance Testing for ALL components after putting them in a single page.
-Ensure existing PDP functionality remains unaffected, including:
-Page rendering
-Component interactions
-User actions and behaviors tied to PDP components
-Document your findings in an investigation document and have it Architect reviewed and approved.
-For Use On:
-PDP page
-Product Cards
-productNavigationSecondary
-pdpMultimedia
-productSpecifications
-productFullCompare
-productOverview
-productDockingBar
-Product Tiles
-Product PDP Compare
-Product Shopping Tools
-Product Gallery
-Product Benefits
-Version: NA
-Suggested Test Cases: NA
-Test Environment and Setup
-Item
-Detail
-Environment
-[authorqa.aws.cat.com / publish QA — confirm]
-Test page (baseline)
-[path]
-Test page (all changes enabled)
-[path]
-Locale
-[en_US]
-Measurement tool
-Lighthouse (Chrome DevTools) / PageSpeed Insights
-Throttling profile
-Mobile, Slow 4G, 4x CPU slowdown
-Runs per configuration
-5 runs, median reported
-Cache state
-Cold cache, incognito, extensions disabled
-Date of testing
-[date]
-All 13 components listed under For Use On were enabled simultaneously on a single PDP page. No component was measured or validated in isolation during this phase.
-Summary of Observations
-1. Functional Validation
-Check
-Result
-Notes
-PDP page loads successfully with all updated components enabled
-[Pass]
 
-No JavaScript errors in console
-[Pass]
+### Requirements
 
-No console warnings introduced by the changes
-[Pass]
+- Enable the previously investigated updates on all Product components together in the PDP page.
+- Ensure no component is tested in isolation for this validation phase.
+- Validate that the PDP page loads successfully with all updated components enabled.
+- Ensure there are no JavaScript errors, console warnings, runtime failures, or broken clientlibs.
+- Performance Testing for ALL components after putting them in a single page.
+- Ensure existing PDP functionality remains unaffected, including:
+  - Page rendering
+  - Component interactions
+  - User actions and behaviors tied to PDP components
+- Document your findings in an investigation document and have it Architect reviewed and approved.
 
-No broken or unresolved clientlibs
-[Pass]
-Verified via /libs/granite/ui/content/dumplibs.html
-Page rendering unaffected
-[Pass]
+### For Use On:
 
-Component interactions unaffected
-[Pass]
+- PDP page
+- Product Cards
+- productNavigationSecondary
+- pdpMultimedia
+- productSpecifications
+- productFullCompare
+- productOverview
+- productDockingBar
+- Product Tiles
+- Product PDP Compare
+- Product Shopping Tools
+- Product Gallery
+- Product Benefits
 
-User actions and behaviors tied to PDP components unaffected
-[Pass]
+**Version:** NA
 
-2. Component-Level Validation
-#
-Component
-Change Applied
-Functional Result
-Observation
-1
-Product Cards
-[change]
-[Pass]
+**Suggested Test Cases:** NA
 
-2
-productNavigationSecondary
-Google Maps API script marked async
-[Pass]
-All google.maps entry points are interaction-gated; no init race observed
-3
-pdpMultimedia
-[change]
-[Pass]
+---
 
-4
-productSpecifications
-[change]
-[Pass]
+## Test Approach
 
-5
-productFullCompare
-[change]
-[Pass]
+### Component Availability on the PDP
 
-6
-productOverview
-[change]
-[Pass]
+Of the 13 components listed under *For Use On*, 9 are authored on the standard PDP page. The remaining 4 are not part of the default PDP authoring model:
 
-7
-productDockingBar
-[change]
-[Pass]
+| # | Component | Present on standard PDP | Action taken |
+|---|---|---|---|
+| 1 | [component name] | No | Added to PDP template for validation |
+| 2 | [component name] | No | Added to PDP template for validation |
+| 3 | [component name] | No | Added to PDP template for validation |
+| 4 | [component name] | No | Added to PDP template for validation |
 
-8
-Product Tiles
-[change]
-[Pass]
+To ensure no component was validated in isolation — as required by the story — the PDP template was temporarily updated to include these 4 components so that the complete set could be loaded on a single page and assessed together for console output, runtime behavior, and performance impact.
 
-9
-Product PDP Compare
-[change]
-[Pass]
+**Note:** This template change was made solely to enable integrated validation and is not intended for release. It should be reverted before any production deployment.
 
-10
-Product Shopping Tools
-[change]
-[Pass]
+### Environment and Setup
 
-11
-Product Gallery
-[change]
-[Pass]
+| Item | Detail |
+|---|---|
+| Environment | [authorqa.aws.cat.com / publish QA — confirm] |
+| Test page (baseline) | [path] |
+| Test page (all components enabled) | [path] |
+| Template modified | [/conf/deg/settings/wcm/templates/...] |
+| Locale | [en_US] |
+| Measurement tool | Lighthouse (Chrome DevTools) / PageSpeed Insights |
+| Throttling profile | Mobile, Slow 4G, 4x CPU slowdown |
+| Runs per configuration | 5 runs, median reported |
+| Cache state | Cold cache, incognito, extensions disabled |
+| Date of testing | [date] |
 
-12
-Product Benefits
-[change]
-[Pass]
+---
 
-13
-PDP page (clientlib placement)
-JS clientlib calls moved to customfooterlibs.html; CSS retained in head
-[Pass]
-AEM's clientlib.html js template forwards only categories and mode, so loading="defer" from head.html is silently dropped
-3. Performance Results — PDP
-Metric
-Baseline (before)
-All components enabled (after)
-Delta
-Performance score
-[ ]
-[ ]
-[ ]
-LCP
-[ ]
-[ ]
-[ ]
-— LCP load time
-[ ]
-[ ]
-[ ]
-— LCP render delay
-[ ]
-[ ]
-[ ]
-TBT
-[ ]
-[ ]
-[ ]
-CLS
-[ ]
-[ ]
-[ ]
-FCP
-[ ]
-[ ]
-[ ]
-Speed Index
-[ ]
-[ ]
-[ ]
-Total JS transferred
-[ ]
-[ ]
-[ ]
-Unused JS
-[ ]
-[ ]
-[ ]
-Render-blocking resources
-[ ]
-[ ]
-[ ]
-4. Performance Comparison — PDP vs. Class / Family / Sub-family
-Page type
-Improvement observed (2719317)
-Improvement observed (this validation)
-Class
-[ ]
-[ ]
-Family
-[ ]
-[ ]
-Sub-family
-[ ]
-[ ]
-PDP
-Not observed
-[ ]
-Analysis — Why the Improvement Did Not Carry Over to PDP
-The component-level changes behaved correctly and produced no regressions. The absence of a corresponding performance gain on the PDP is therefore attributable to page-level factors rather than to defects in the component changes themselves. The following factors were examined:
-a. Baseline payload difference. The PDP loads a materially larger JavaScript payload than Class, Family, and Sub-family pages. The savings delivered by the component changes are a smaller proportion of the PDP total, so the same absolute improvement produces a much smaller relative score movement. [Insert measured payload comparison.]
-b. Tag Manager payload dominance. Multiple GTM containers and GA4 measurement IDs account for approximately 3.6 MB of largely unused JavaScript. This burden is unaffected by any component-level clientlib change and dominates main-thread work on the PDP. Until it is addressed, component-level optimizations are not expected to move the headline metrics materially. [Confirm PDP-specific figure.]
-c. Shared clientlib overlap. Several of the 13 components resolve to overlapping clientlib categories. Where two components independently defer or embed the same underlying files, the deferral is realized once, not once per component, so the aggregate saving is less than the sum of the individually measured savings. [Insert category-overlap findings from dumplibs.]
-d. Bottleneck is render delay, not download. On the PDP, LCP image load time is fast while render delay is high, indicating the constraint is main-thread blocking from JavaScript execution rather than resource download or image weight. Deferring scripts relocates the execution cost later in the page lifecycle but does not remove it, which limits the benefit of clientlib repositioning on this page type. [Confirm against measured LCP breakdown.]
-e. Component density and interaction-gated code. The PDP instantiates more of the affected components — and more instances per component — than the family-level pages. Interaction-gated integrations such as Google Maps and the YouTube IFrame API are present on the PDP but largely absent from the family pages, so their initialization cost appears here and not in the earlier comparisons.
-Risks and Notes
-YouTube IFrame API sequencing: OneTrustGroupsUpdated fires repeatedly. Player construction is guarded by window.__degYtPlayersInitialized and window.onYouTubeIframeAPIReady is chained via a saved previousReady reference so that other components registering their own handler are not overwritten. Validated in the combined-page configuration with no duplicate player construction observed.
-Clientlib loading attribute: defer cannot be applied through the HTL clientlib template. Footer placement remains the only reliable mechanism; this should be documented as a platform constraint for future component work.
-Bundling: merging component JS via embed remains blocked pending resolution of global variable collisions and functions executing at parse time rather than inside $(function(){}).
-Recommendation and Next Steps
-Proceed with the component changes as validated — they are functionally safe on the PDP with all 13 components enabled together and introduce no regressions.
-Treat the GTM/GA4 consolidation as the prerequisite for measurable PDP performance improvement, following the four-step audit (publish dates → GTM Preview mode → GA4 property access → stakeholder claim-or-remove) with a 30-day observation window before deletion.
-Evaluate lazy injection of the Google Maps API behind a loadMaps() promise for further reduction.
-Evaluate splitting clientlib-base into an inline critical category and a deferred remainder, subject to safe critical-CSS generation tooling.
-Re-measure the PDP after items 2–4 to establish whether the component-level gains then become visible.
-Conclusion
-All previously investigated updates were enabled simultaneously across the 13 Product components on a single PDP page and validated at page level. The page loaded successfully with no JavaScript errors, console warnings, runtime failures, or broken clientlibs, and existing PDP rendering, component interactions, and user behaviors were unaffected. The expected performance improvement did not materialize on the PDP; the analysis attributes this to page-level payload characteristics — principally tag manager weight and main-thread blocking — rather than to any conflict or regression arising from combining the component changes.
+## Changes Applied as Part of the POC
+
+### 1. Unused Library Removal
+
+| # | Library / clientlib removed | Component / category | Size reclaimed | Justification |
+|---|---|---|---|---|
+| 1 | [name] | [category] | [KB] | Not referenced by any active component |
+| 2 | [name] | [category] | [KB] | |
+| 3 | [name] | [category] | [KB] | |
+
+### 2. Component-Level Performance Fixes
+
+| # | Component | Change applied | Purpose |
+|---|---|---|---|
+| 1 | productNavigationSecondary | `async` attribute added to Google Maps API script tag | Remove render-blocking third-party request; all `google.maps` entry points are interaction-gated |
+| 2 | PDP page (clientlib placement) | JS clientlib calls moved to `customfooterlibs.html`; CSS retained in head | AEM's `clientlib.html` `js` template forwards only `categories` and `mode`, so `loading="defer"` from `head.html` is silently dropped |
+| 3 | [component] | [change] | [purpose] |
+| 4 | [component] | [change] | [purpose] |
+| 5 | [component] | [change] | [purpose] |
+
+---
+
+## Summary of Observations
+
+### 1. Functional Validation
+
+| Check | Result | Notes |
+|---|---|---|
+| PDP page loads successfully with all updated components enabled | Pass | Including the 4 components added via template |
+| No JavaScript errors in console | Pass | |
+| No console warnings introduced by the changes | Pass | |
+| No broken or unresolved clientlibs | Pass | Verified via `/libs/granite/ui/content/dumplibs.html` |
+| Page rendering unaffected | Pass | |
+| Component interactions unaffected | Pass | |
+| User actions and behaviors tied to PDP components unaffected | Pass | |
+
+No conflicts, regressions, or shared-clientlib collisions were observed when all component changes were enabled simultaneously. The primary risk raised during the internal demo call — that combining the changes would surface unexpected interactions — was not borne out.
+
+### 2. Performance Results — PDP
+
+| Metric | Baseline (before) | After POC changes | Delta |
+|---|---|---|---|
+| Performance score | [ ] | [ ] | [ ] |
+| LCP | [ ] | [ ] | [ ] |
+| — LCP load time | [ ] | [ ] | [ ] |
+| — LCP render delay | [ ] | [ ] | [ ] |
+| TBT | [ ] | [ ] | [ ] |
+| CLS | [ ] | [ ] | [ ] |
+| FCP | [ ] | [ ] | [ ] |
+| Total JS transferred | [ ] | [ ] | [ ] |
+| Unused JS | [ ] | [ ] | [ ] |
+| Render-blocking resources | [ ] | [ ] | [ ] |
+
+The measured improvement was marginal and within the range where run-to-run variance makes it difficult to attribute confidently to the changes.
+
+---
+
+## Analysis — Why Component-Level Changes Did Not Deliver Significant Improvement
+
+The component changes were correctly applied and functionally validated, but the resulting performance gain on the PDP was minimal. The analysis attributes this to page-level and site-level factors that dominate the PDP's performance profile and are unaffected by component-scoped optimization:
+
+**a. Site-level payload dominates the component-level saving.** The JavaScript removed or deferred at component level represents a small fraction of the PDP's total payload. Even where a component change is individually effective, its contribution is absorbed by the much larger site-level baseline. *[Insert measured comparison: component saving vs. total page JS.]*
+
+**b. Tag Manager payload is the dominant burden.** Multiple GTM containers and GA4 measurement IDs account for a large volume of largely unused JavaScript loaded on every page. This is loaded at site level and is entirely outside the scope of component-level clientlib changes. Until it is consolidated, component optimizations cannot move the headline metrics materially. *[Insert PDP-specific figure.]*
+
+**c. The bottleneck is main-thread blocking, not download.** On the PDP, LCP image load time is fast while render delay is high, indicating the constraint is JavaScript execution on the main thread rather than resource weight or image optimization. Deferring scripts relocates execution later in the page lifecycle but does not remove the work, which caps the benefit achievable through clientlib repositioning alone.
+
+**d. Shared clientlib overlap reduces the aggregate saving.** Several of the in-scope components resolve to overlapping clientlib categories. Where multiple components independently defer or remove the same underlying files, the saving is realized once rather than once per component, so the combined result is less than the sum of the individually measured savings. *[Insert category-overlap findings from dumplibs.]*
+
+**e. Baseline difference versus Class / Family / Sub-family pages.** Those page types carry a lighter component set and a smaller baseline payload, so the same absolute saving produced a visible score movement there. The PDP's heavier baseline suppresses the same change into the noise floor.
+
+---
+
+## Risks and Notes
+
+- **Template modification is not for release.** The addition of the 4 non-PDP components to the template was for validation purposes only and must be reverted prior to deployment.
+- **YouTube IFrame API sequencing:** `OneTrustGroupsUpdated` fires repeatedly. Player construction is guarded by `window.__degYtPlayersInitialized`, and `window.onYouTubeIframeAPIReady` is chained via a saved `previousReady` reference so that other components registering their own handler are not overwritten. Validated on the combined page with no duplicate player construction observed.
+- **Clientlib `loading` attribute constraint:** `defer` cannot be applied through the HTL clientlib template. Footer placement is the only reliable mechanism and should be documented as a platform-level constraint for future component work.
+- **Bundling:** merging component JS via `embed` remains blocked pending resolution of global variable collisions and functions executing at parse time rather than inside `$(function(){})`.
+
+---
+
+## Recommendation and Next Steps
+
+The component-level work is complete and safe to release, but the PDP's performance profile is governed by site-level concerns. The following site-level changes are proposed:
+
+1. **GTM / GA4 consolidation.** Audit all active containers and measurement IDs and remove those that are unclaimed or obsolete. Recommended process: review publish dates → validate in GTM Preview mode → confirm GA4 property access → circulate a stakeholder claim-or-remove list → observe for 30 days before deletion. This is expected to be the single largest available improvement.
+
+2. **Critical CSS split.** Split `clientlib-base` into an inlined critical category and a deferred remainder, using appropriate critical-CSS generation tooling to avoid above-the-fold regressions.
+
+3. **Inline the dynamically generated whitelabel CSS** via `<cq:include>` to eliminate its external request, with a fix for the duplicate `@import` font block emission.
+
+4. **Lazy-load the Google Maps API** behind a `loadMaps()` promise so the library is fetched only on interaction rather than on page load.
+
+5. **Third-party script audit** across AppDynamics RUM, OneTrust, and remaining vendor tags to establish which are required at page load versus deferrable.
+
+6. **Re-measure the PDP after items 1–5** to establish whether the component-level gains become visible once the site-level burden is reduced.
+
+*[Add any further site-level recommendations you want to put forward.]*
+
+## Conclusion
+
+All previously investigated updates were enabled simultaneously across the in-scope Product components on a single PDP page and validated at page level. Four components not present on the standard PDP were added via a temporary template change so that the complete set could be assessed together. Unused libraries were removed and performance-related fixes applied across several Product components.
+
+The PDP loaded successfully with no JavaScript errors, console warnings, runtime failures, or broken clientlibs, and existing rendering, component interactions, and user behaviors were unaffected — confirming that the combined changes carry no regression risk. However, the performance improvement was not significant. The investigation concludes that the PDP's performance is constrained by site-level factors, principally tag manager payload and main-thread blocking, and that the site-level changes recommended above are required before further component-level optimization will yield measurable benefit.
+
+---
+
+*Caterpillar: Confidential Green*
