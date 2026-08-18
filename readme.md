@@ -1,4 +1,3 @@
-rom combining the component changes.
 # 2881905 — FS | Investigation and POC | SEO | Re-evaluate Component-level JavaScript Review for Product Components Together
 
 # PROBLEM STATEMENT
@@ -197,6 +196,35 @@ The component-level work is complete and safe to release, but the PDP's performa
 All previously investigated updates were enabled simultaneously across the in-scope Product components on a single PDP page and validated at page level. Four components not present on the standard PDP were added via a temporary template change so that the complete set could be assessed together. Unused libraries were removed and performance-related fixes applied across several Product components.
 
 The PDP loaded successfully with no JavaScript errors, console warnings, runtime failures, or broken clientlibs, and existing rendering, component interactions, and user behaviors were unaffected — confirming that the combined changes carry no regression risk. However, the performance improvement was not significant. The investigation concludes that the PDP's performance is constrained by site-level factors, principally tag manager payload and main-thread blocking, and that the site-level changes recommended above are required before further component-level optimization will yield measurable benefit.
+
+### Implementation
+
+**Changes implemented and validated during this POC**
+
+| # | Change | Files / path affected | Status | Release recommendation |
+|---|---|---|---|---|
+| 1 | `async` attribute added to Google Maps API script tag | `productNavigationSecondary.html` | Implemented and validated | Ready for release |
+| 2 | JS clientlib calls moved to `customfooterlibs.html`; CSS retained in head | `customfooterlibs.html`, `head.html` | Implemented and validated | Ready for release |
+| 3 | Unused library removal | [clientlib / category path] | Implemented and validated | Ready for release |
+| 4 | [component fix] | [file path] | Implemented and validated | Ready for release |
+| 5 | [component fix] | [file path] | Implemented and validated | Ready for release |
+| 6 | 4 non-PDP components added to template for integrated validation | [template path] | Implemented for testing only | **Revert before deployment — not for release** |
+
+**Implementation sequence proposed**
+
+1. **Revert the template change** used to host the 4 non-PDP components. This was validation scaffolding only and must not reach any higher environment.
+2. **Release the validated component changes** (items 1–5 above) as a single deployment. They are functionally safe, carry no regression risk, and their combined behavior has been verified at page level. The performance benefit is small on the PDP but positive, and these changes are prerequisites for the site-level work to be measurable.
+3. **Raise separate stories for the site-level items** listed under *Recommendation and Next Steps*. These are out of scope for this ticket and require their own analysis, stakeholder sign-off, and rollout windows — particularly the GTM/GA4 consolidation, which needs a 30-day observation period before any container deletion.
+4. **Re-baseline the PDP** after the component changes are deployed, so that subsequent site-level work is measured against a stable reference rather than the pre-POC baseline.
+5. **Re-measure after each site-level change individually** rather than as a batch, so the contribution of each can be attributed. Batching them would repeat the attribution problem this investigation encountered.
+
+**Implementation risks and dependencies**
+
+- The site-level changes have dependencies outside the front-end team — GTM/GA4 consolidation requires marketing and analytics stakeholder input, and the critical CSS split requires tooling that is not yet in place.
+- Deploying the component changes alone will not produce a visible Lighthouse or Core Web Vitals movement on the PDP. This should be communicated to stakeholders in advance so the release is not judged against an expectation it cannot meet.
+- The clientlib footer placement pattern should be captured as a documented standard so future components do not reintroduce render-blocking JS through `head.html`.
+
+*[Adjust the table rows and sequence to match what you are actually proposing to ship.]*
 
 ---
 
