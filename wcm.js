@@ -1,11 +1,15 @@
-const $p = $('#tabs-100a56e058-item-f408fb6881-tabpanel');
-const $s = $p.closest('.slick-slider');
-const $sl = $s.find('.slick-slide').first();
-console.log({
-  panel: $p.length,
-  slider: $s.length,
-  sliderW: $s.width(),
-  listW: $s.find('.slick-list').width(),
-  slideInline: $sl[0].style.width,
-  trackLeft: $s.find('.slick-track')[0].style.left
-});
+const $s = $('#tabs-100a56e058-item-f408fb6881-tabpanel').closest('.slick-slider');
+console.table($s.find('.slick-slide').map(function(i, el) {
+  const cs = getComputedStyle(el);
+  return {
+    idx: el.getAttribute('data-slick-index'),
+    active: el.classList.contains('slick-active'),
+    ariaHidden: el.getAttribute('aria-hidden'),
+    opacity: cs.opacity,
+    z: cs.zIndex,
+    left: cs.left,
+    h: Math.round(el.getBoundingClientRect().height),
+    top: Math.round(el.getBoundingClientRect().top)
+  };
+}).get());
+console.log('track h:', $s.find('.slick-track').height(), 'list h:', $s.find('.slick-list').height());
