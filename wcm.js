@@ -1,13 +1,7 @@
-$('.tabs.auth-track').find('.tabs__content > .slick-list > .slick-track > .slick-slide.slick-active > div').length
+$('.carousel--hero .slick-slide').map((i,s)=>$(s).find('.teaser').attr('style')).get()
 
-
-var height = $activePanel.outerHeight(true);
-if (height > 0) {
-    $(container).find('.tabs__content > .slick-list').css('height', height + 'px');
-}
-
-// before
-var $activePanel = $(container).find('.tabs__content .slick-active > div');
-
-// after
-var $activePanel = $(container).find('.tabs__content > .slick-list > .slick-track > .slick-slide.slick-active > div');
+that.on('init setPosition breakpoint', function () {
+    that.find('.slick-slide .teaser').matchHeight({ byRow: false });
+    fixCarouselSlideAccessibility(that);
+    fixCarouselDotsAccessibility(that);
+});
