@@ -1,5 +1,13 @@
-$('#tabs-100a56e058-item-f408fb6881-tabpanel').closest('.slick-slider').find('.slick-list')[0].style.height
+$('.tabs.auth-track').find('.tabs__content > .slick-list > .slick-track > .slick-slide.slick-active > div').length
 
-requestAnimationFrame(function () {
-  $(panel).closest('.slick-initialized').slick('setPosition');
-});
+
+var height = $activePanel.outerHeight(true);
+if (height > 0) {
+    $(container).find('.tabs__content > .slick-list').css('height', height + 'px');
+}
+
+// before
+var $activePanel = $(container).find('.tabs__content .slick-active > div');
+
+// after
+var $activePanel = $(container).find('.tabs__content > .slick-list > .slick-track > .slick-slide.slick-active > div');
