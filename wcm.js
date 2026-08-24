@@ -1,3 +1,10 @@
+$('.carousel--hero .slick-slide').map((i,s)=>
+  $(s).attr('data-slick-index') + ' | ' +
+  ($(s).hasClass('slick-cloned') ? 'clone' : 'real') + ' | ' +
+  String($(s).find('.teaser').attr('style'))
+).get()
+
+
 $('.carousel--hero .slick-slide').map((i,s)=>$(s).find('.teaser').attr('style')).get()
 
 (() => {
