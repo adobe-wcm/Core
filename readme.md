@@ -1,231 +1,234 @@
-# 2881905 — FS | Investigation and POC | SEO | Re-evaluate Component-level JavaScript Review for Product Components Together
+# Tabs v2 — Intermittent Blank Tab Panel
 
-# PROBLEM STATEMENT
-
-## Goals and Outcome from Analysis
-
-The goal of this activity was to validate all previously implemented updates across PDP-related components by enabling them together on a single PDP page, rather than testing them individually. This combined validation ensures that shared clientlibs and interdependent components work seamlessly without conflicts or regressions.
-
-During the investigation it was identified that 4 of the 13 in-scope components are not authored on the standard PDP page. To validate them under the same page-level conditions as the remaining components, the PDP template was temporarily updated to include these components, allowing console output and performance to be observed with the complete component set present.
-
-As part of the POC, unused libraries were removed and performance-related fixes were applied across several Product components. The outcome confirmed that the PDP page loads successfully with all updated components functioning as expected, with no JavaScript errors, console warnings, runtime issues, or broken dependencies observed, and existing PDP functionality — page rendering, component interactions, and user behaviors — was not impacted. However, these component-level changes did not produce a significant improvement in overall page performance. The analysis indicates that meaningful gains on the PDP require site-level changes, which are proposed in the *Recommendation and Next Steps* section below.
-
-## Scope of Analysis
-
-### Background
-
-As part of 1895384 and 1918024, code changes were individually applied and validated on multiple PDP-related components to address the identified issue. Each component was tested in isolation and behaved as expected as part of that investigation.
-
-During our internal demo call, it was highlighted that since the Product components coexist on the PDP and often share clientlibs, there is a risk of unexpected conflicts or regressions when all changes are deployed together.
-
-To mitigate this risk, an integrated validation approach is required by enabling the changes across all relevant PDP components simultaneously and validating them at page level, put together.
-
-As part of 2719317, code changes were applied together and validated on multiple PDP-related components. Each component was tested individually, and then all components were also tested together. However, after combining all the product component changes, the expected performance improvements seen on Class, Family, and Sub-family pages were not observed on the PDP pages. This was identified during the investigation phase.
-
-### Requirements
-
-- Enable the previously investigated updates on all Product components together in the PDP page.
-- Ensure no component is tested in isolation for this validation phase.
-- Validate that the PDP page loads successfully with all updated components enabled.
-- Ensure there are no JavaScript errors, console warnings, runtime failures, or broken clientlibs.
-- Performance Testing for ALL components after putting them in a single page.
-- Ensure existing PDP functionality remains unaffected, including:
-  - Page rendering
-  - Component interactions
-  - User actions and behaviors tied to PDP components
-- Document your findings in an investigation document and have it Architect reviewed and approved.
-
-### For Use On:
-
-- PDP page
-- Product Cards
-- productNavigationSecondary
-- pdpMultimedia
-- productSpecifications
-- productFullCompare
-- productOverview
-- productDockingBar
-- Product Tiles
-- Product PDP Compare
-- Product Shopping Tools
-- Product Gallery
-- Product Benefits
-
-**Version:** NA
-
-**Suggested Test Cases:** NA
+**Component:** `deg/components/content/container/tabs/v2/tabs`
+**Environment observed:** `catdealer.com` (QA/staging author), AEM 6.5
+**Status:** Root cause identified, fix scoped to component JS
 
 ---
 
-## Test Approach
+## Symptom
 
-### Component Availability on the PDP
+On a page with a tabs v2 component, the active tab panel intermittently renders blank.
+Same URL, same tab, no content change — sometimes the panel shows, sometimes it does not.
 
-Of the 13 components listed under *For Use On*, 9 are authored on the standard PDP page. The remaining 4 are not part of the default PDP authoring model:
+Workaround observed by users: click a different tab, then click back. Content then appears.
 
-| # | Component | Present on standard PDP | Action taken |
-|---|---|---|---|
-| 1 | [component name] | No | Added to PDP template for validation |
-| 2 | [component name] | No | Added to PDP template for validation |
-| 3 | [component name] | No | Added to PDP template for validation |
-| 4 | [component name] | No | Added to PDP template for validation |
+Most visible when deep-linking, e.g.
+`.../cat-ai-assistant.html#tabs-100a56e058-item-f408fb6881-tab`
 
-To ensure no component was validated in isolation — as required by the story — the PDP template was temporarily updated to include these 4 components so that the complete set could be loaded on a single page and assessed together for console output, runtime behavior, and performance impact.
+---
 
-**Note:** This template change was made solely to enable integrated validation and is not intended for release. It should be reverted before any production deployment.
+## Investigation
 
-### Environment and Setup
+### Step 1 — Content is present in the DOM
 
-| Item | Detail |
+DevTools showed identical markup in both broken and working states. The active slide
+(`data-slick-index="3"`, `slick-current slick-active`) contained the expected panel and
+heading in both cases. Nothing was missing or unrendered.
+
+### Step 2 — Slide positioning is correct
+
+Slide inline styles matched the container:
+
+| Property | Value |
 |---|---|
-| Environment | [authorqa.aws.cat.com / publish QA — confirm] |
-| Test page (baseline) | [path] |
-| Test page (all components enabled) | [path] |
-| Template modified | [/conf/deg/settings/wcm/templates/...] |
-| Locale | [en_US] |
-| Measurement tool | Lighthouse (Chrome DevTools) / PageSpeed Insights |
-| Throttling profile | Mobile, Slow 4G, 4x CPU slowdown |
-| Runs per configuration | 5 runs, median reported |
-| Cache state | Cold cache, incognito, extensions disabled |
-| Date of testing | [date] |
+| `sliderW` | 1100 |
+| `listW` | 1100 |
+| slide inline `width` | `1100px` |
+| `.slick-track` inline `left` | *(empty)* |
 
----
+`.tabs__content` is initialized with `fade: true`. In fade mode slick positions each slide
+individually via a negative `left` and toggles `opacity`/`z-index`; the track is not
+translated. So `left: -3300px` on slide 3 is correct, not a broken offset.
 
-## Changes Applied as Part of the POC
+### Step 3 — The wrapper is collapsed
 
-### 1. Unused Library Removal
+Comparing the two states:
 
-| # | Library / clientlib removed | Component / category | Size reclaimed | Justification |
-|---|---|---|---|---|
-| 1 | [name] | [category] | [KB] | Not referenced by any active component |
-| 2 | [name] | [category] | [KB] | |
-| 3 | [name] | [category] | [KB] | |
-
-### 2. Component-Level Performance Fixes
-
-| # | Component | Change applied | Purpose |
-|---|---|---|---|
-| 1 | productNavigationSecondary | `async` attribute added to Google Maps API script tag | Remove render-blocking third-party request; all `google.maps` entry points are interaction-gated |
-| 2 | PDP page (clientlib placement) | JS clientlib calls moved to `customfooterlibs.html`; CSS retained in head | AEM's `clientlib.html` `js` template forwards only `categories` and `mode`, so `loading="defer"` from `head.html` is silently dropped |
-| 3 | [component] | [change] | [purpose] |
-| 4 | [component] | [change] | [purpose] |
-| 5 | [component] | [change] | [purpose] |
-
----
-
-## Summary of Observations
-
-### 1. Functional Validation
-
-| Check | Result | Notes |
+| State | `.slick-track` height | `.slick-list` height |
 |---|---|---|
-| PDP page loads successfully with all updated components enabled | Pass | Including the 4 components added via template |
-| No JavaScript errors in console | Pass | |
-| No console warnings introduced by the changes | Pass | |
-| No broken or unresolved clientlibs | Pass | Verified via `/libs/granite/ui/content/dumplibs.html` |
-| Page rendering unaffected | Pass | |
-| Component interactions unaffected | Pass | |
-| User actions and behaviors tied to PDP components unaffected | Pass | |
+| Broken | 1052 | **0** |
+| Working | 1052 | 1052 |
 
-No conflicts, regressions, or shared-clientlib collisions were observed when all component changes were enabled simultaneously. The primary risk raised during the internal demo call — that combining the changes would surface unexpected interactions — was not borne out.
+`.slick-list` has `overflow: hidden`. The content is fully rendered and correctly
+positioned — it is being clipped to zero height by its wrapper.
 
-### 2. Performance Results — PDP
+### Step 4 — `setPosition` does not fix it
 
-| Metric | Baseline (before) | After POC changes | Delta |
-|---|---|---|---|
-| Performance score | [ ] | [ ] | [ ] |
-| LCP | [ ] | [ ] | [ ] |
-| — LCP load time | [ ] | [ ] | [ ] |
-| — LCP render delay | [ ] | [ ] | [ ] |
-| TBT | [ ] | [ ] | [ ] |
-| CLS | [ ] | [ ] | [ ] |
-| FCP | [ ] | [ ] | [ ] |
-| Total JS transferred | [ ] | [ ] | [ ] |
-| Unused JS | [ ] | [ ] | [ ] |
-| Render-blocking resources | [ ] | [ ] | [ ] |
+Calling `$('.tabs__content.slick-initialized').slick('setPosition')` had no effect.
 
-The measured improvement was marginal and within the range where run-to-run variance makes it difficult to attribute confidently to the changes.
+Checked against slick 1.8.1 source:
 
----
+```js
+Slick.prototype.setHeight = function() {
+    var _ = this;
+    if (_.options.slidesToShow === 1 && _.options.adaptiveHeight === true && _.options.vertical === false) {
+        var targetHeight = _.$slides.eq(_.currentSlide).outerHeight(true);
+        _.$list.css('height', targetHeight + 'px');
+    }
+};
+```
 
-## Analysis — Why Component-Level Changes Did Not Deliver Significant Improvement
+`.tabs__content` is initialized **without** `adaptiveHeight`, which defaults to `false`.
+`setHeight()` therefore never executes, and **slick never writes an inline height on
+`.slick-list` for this slider at all.**
 
-The component changes were correctly applied and functionally validated, but the resulting performance gain on the PDP was minimal. The analysis attributes this to page-level and site-level factors that dominate the PDP's performance profile and are unaffected by component-scoped optimization:
+The `height: 0px` is written by our own component code, not by slick. `setPosition` could
+never have corrected it.
 
-**a. Site-level payload dominates the component-level saving.** The JavaScript removed or deferred at component level represents a small fraction of the PDP's total payload. Even where a component change is individually effective, its contribution is absorbed by the much larger site-level baseline. *[Insert measured comparison: component saving vs. total page JS.]*
+### Step 5 — Root cause
 
-**b. Tag Manager payload is the dominant burden.** Multiple GTM containers and GA4 measurement IDs account for a large volume of largely unused JavaScript loaded on every page. This is loaded at site level and is entirely outside the scope of component-level clientlib changes. Until it is consolidated, component optimizations cannot move the headline metrics materially. *[Insert PDP-specific figure.]*
+In `tabs.js`, `adjustHeight()`:
 
-**c. The bottleneck is main-thread blocking, not download.** On the PDP, LCP image load time is fast while render delay is high, indicating the constraint is JavaScript execution on the main thread rather than resource weight or image optimization. Deferring scripts relocates execution later in the page lifecycle but does not remove the work, which caps the benefit achievable through clientlib repositioning alone.
+```js
+var $activePanel = $(container).find('.tabs__content .slick-active > div');
+...
+var height = $activePanel.outerHeight(true);
+$(container).find('.tabs__content > .slick-list').css('height', height + 'px');
+```
 
-**d. Shared clientlib overlap reduces the aggregate saving.** Several of the in-scope components resolve to overlapping clientlib categories. Where multiple components independently defer or remove the same underlying files, the saving is realized once rather than once per component, so the combined result is less than the sum of the individually measured savings. *[Insert category-overlap findings from dumplibs.]*
+`.find('.slick-active')` is a **descendant** selector. It matches the active slide of the
+tabs slider *and* the active slide of any nested slick slider inside any tab panel
+(multimedia carousels, List components, etc.).
 
-**e. Baseline difference versus Class / Family / Sub-family pages.** Those page types carry a lighter component set and a smaller baseline payload, so the same absolute saving produced a visible score movement there. The PDP's heavier baseline suppresses the same change into the noise floor.
+Console table of `.slick-slide` elements in the broken state:
 
----
+| row | idx | active | opacity | left | height |
+|---|---|---|---|---|---|
+| 0 | 0 | false | 0 | `0px` | 1052 |
+| 1 | 1 | false | 0 | `-1100px` | 1052 |
+| 2 | 2 | false | 0 | `-2200px` | 1052 |
+| **3** | **0** | **true** | 1 | **`auto`** | **0** |
+| 4 | 1 | false | 1 | `auto` | 0 |
+| **5** | **3** | **true** | 1 | **`-3300px`** | **1052** |
+| 6 | 4 | false | 0 | `-4400px` | 1052 |
 
-## Risks and Notes
+Rows 3 and 4 belong to a **nested, non-fade slider** — non-fade sliders translate the track,
+so their slides carry no inline `left`. Being inside a hidden panel, they measure `0`.
 
-- **Template modification is not for release.** The addition of the 4 non-PDP components to the template was for validation purposes only and must be reverted prior to deployment.
-- **YouTube IFrame API sequencing:** `OneTrustGroupsUpdated` fires repeatedly. Player construction is guarded by `window.__degYtPlayersInitialized`, and `window.onYouTubeIframeAPIReady` is chained via a saved `previousReady` reference so that other components registering their own handler are not overwritten. Validated on the combined page with no duplicate player construction observed.
-- **Clientlib `loading` attribute constraint:** `defer` cannot be applied through the HTL clientlib template. Footer placement is the only reliable mechanism and should be documented as a platform-level constraint for future component work.
-- **Bundling:** merging component JS via `embed` remains blocked pending resolution of global variable collisions and functions executing at parse time rather than inside `$(function(){})`.
+`.outerHeight()` returns the height of the **first** matched element in DOM order. The
+nested slider's slide precedes the real tab slide, so the measurement returns `0`, and
+`0px` is written to `.slick-list`.
 
----
+In the working state, row 3 was `active: false` — only the real tab slide matched, and
+`1052` was written correctly.
 
-## Recommendation and Next Steps
-
-The component-level work is complete and safe to release, but the PDP's performance profile is governed by site-level concerns. The following site-level changes are proposed:
-
-1. **GTM / GA4 consolidation.** Audit all active containers and measurement IDs and remove those that are unclaimed or obsolete. Recommended process: review publish dates → validate in GTM Preview mode → confirm GA4 property access → circulate a stakeholder claim-or-remove list → observe for 30 days before deletion. This is expected to be the single largest available improvement.
-
-2. **Critical CSS split.** Split `clientlib-base` into an inlined critical category and a deferred remainder, using appropriate critical-CSS generation tooling to avoid above-the-fold regressions.
-
-3. **Inline the dynamically generated whitelabel CSS** via `<cq:include>` to eliminate its external request, with a fix for the duplicate `@import` font block emission.
-
-4. **Lazy-load the Google Maps API** behind a `loadMaps()` promise so the library is fetched only on interaction rather than on page load.
-
-5. **Third-party script audit** across AppDynamics RUM, OneTrust, and remaining vendor tags to establish which are required at page load versus deferrable.
-
-6. **Re-measure the PDP after items 1–5** to establish whether the component-level gains become visible once the site-level burden is reduced.
-
-*[Add any further site-level recommendations you want to put forward.]*
-
-## Conclusion
-
-All previously investigated updates were enabled simultaneously across the in-scope Product components on a single PDP page and validated at page level. Four components not present on the standard PDP were added via a temporary template change so that the complete set could be assessed together. Unused libraries were removed and performance-related fixes applied across several Product components.
-
-The PDP loaded successfully with no JavaScript errors, console warnings, runtime failures, or broken clientlibs, and existing rendering, component interactions, and user behaviors were unaffected — confirming that the combined changes carry no regression risk. However, the performance improvement was not significant. The investigation concludes that the PDP's performance is constrained by site-level factors, principally tag manager payload and main-thread blocking, and that the site-level changes recommended above are required before further component-level optimization will yield measurable benefit.
-
-### Implementation
-
-**Changes implemented and validated during this POC**
-
-| # | Change | Files / path affected | Status | Release recommendation |
-|---|---|---|---|---|
-| 1 | `async` attribute added to Google Maps API script tag | `productNavigationSecondary.html` | Implemented and validated | Ready for release |
-| 2 | JS clientlib calls moved to `customfooterlibs.html`; CSS retained in head | `customfooterlibs.html`, `head.html` | Implemented and validated | Ready for release |
-| 3 | Unused library removal | [clientlib / category path] | Implemented and validated | Ready for release |
-| 4 | [component fix] | [file path] | Implemented and validated | Ready for release |
-| 5 | [component fix] | [file path] | Implemented and validated | Ready for release |
-| 6 | 4 non-PDP components added to template for integrated validation | [template path] | Implemented for testing only | **Revert before deployment — not for release** |
-
-**Implementation sequence proposed**
-
-1. **Revert the template change** used to host the 4 non-PDP components. This was validation scaffolding only and must not reach any higher environment.
-2. **Release the validated component changes** (items 1–5 above) as a single deployment. They are functionally safe, carry no regression risk, and their combined behavior has been verified at page level. The performance benefit is small on the PDP but positive, and these changes are prerequisites for the site-level work to be measurable.
-3. **Raise separate stories for the site-level items** listed under *Recommendation and Next Steps*. These are out of scope for this ticket and require their own analysis, stakeholder sign-off, and rollout windows — particularly the GTM/GA4 consolidation, which needs a 30-day observation period before any container deletion.
-4. **Re-baseline the PDP** after the component changes are deployed, so that subsequent site-level work is measured against a stable reference rather than the pre-POC baseline.
-5. **Re-measure after each site-level change individually** rather than as a batch, so the contribution of each can be attributed. Batching them would repeat the attribution problem this investigation encountered.
-
-**Implementation risks and dependencies**
-
-- The site-level changes have dependencies outside the front-end team — GTM/GA4 consolidation requires marketing and analytics stakeholder input, and the critical CSS split requires tooling that is not yet in place.
-- Deploying the component changes alone will not produce a visible Lighthouse or Core Web Vitals movement on the PDP. This should be communicated to stakeholders in advance so the release is not judged against an expectation it cannot meet.
-- The clientlib footer placement pattern should be captured as a documented standard so future components do not reintroduce render-blocking JS through `head.html`.
-
-*[Adjust the table rows and sequence to match what you are actually proposing to ship.]*
+**The race:** whether a nested slider has initialized and applied `.slick-active` to its
+own slide before `adjustHeight()` runs. This is why the failure is intermittent and why
+clicking away and back resolves it (the re-run measures after nested sliders have settled).
 
 ---
 
-*Caterpillar: Confidential Green*
+## Fix
+
+Three edits in the tabs v2 component JS. No slick configuration changes.
+
+### 1. `adjustHeight()` — scope measurement to tab-level slides
+
+```js
+// before
+var $activePanel = $(container).find('.tabs__content .slick-active > div');
+
+// after
+var $activePanel = $(container).find('.tabs__content > .slick-list > .slick-track > .slick-slide.slick-active > div');
+```
+
+### 2. `adjustHeightWithImageCheck()` — same line, same change
+
+```js
+// before
+var $activePanel = $(container).find('.tabs__content .slick-active > div');
+
+// after
+var $activePanel = $(container).find('.tabs__content > .slick-list > .slick-track > .slick-slide.slick-active > div');
+```
+
+### 3. `adjustHeight()` — guard against a zero measurement
+
+```js
+// before
+var height = $activePanel.outerHeight(true);
+$(container).find('.tabs__content > .slick-list').css('height', height + 'px');
+
+// after
+var height = $activePanel.outerHeight(true);
+if (height > 0) {
+    $(container).find('.tabs__content > .slick-list').css('height', height + 'px');
+}
+```
+
+### Why this does not break existing behaviour
+
+- Child combinators restrict matching to the tabs slider's own slides. Nested sliders in
+  other panels can no longer contaminate the measurement.
+- No reach is lost: the tab-level slide is an ancestor of everything in the active panel,
+  so `$activePanel.find('.slick-initialized')` still finds every nested slider, and
+  `waitForImages()` still finds every image.
+- The `.multimedia` branch and `waitForImages()` become more correct for the same reason —
+  they previously operated on the wrong element whenever the race lost.
+- The `height > 0` guard is the safety net. The existing polling loop (10 × 500ms) re-runs
+  `adjustHeight()` whenever heights diverge, so a skipped write self-corrects on the next
+  poll. Previously a `0` was written and stuck.
+- Selector verified in browser before implementation: returns exactly `1` match.
+
+---
+
+## Alternative considered and rejected
+
+**CSS override:**
+
+```css
+.auth .tabs .tabs__content > .slick-list { height: auto !important; }
+```
+
+Verified working, and a smaller diff. Rejected because `height: auto` resolves to the
+**tallest** panel (slides overlap via negative `left` offsets), effectively disabling
+per-panel height. Shorter tabs gain dead whitespace on every tabs v2 instance site-wide.
+
+Retained as a rollback option if the JS fix causes issues.
+
+**`infinite: false` on `.tabs__content`:** the more complete change, but it alters slide
+indices and slick's internal `currentSlide` bookkeeping, which `slickGoTo` and the
+`beforeChange` handler both depend on. Out of scope for a bug fix; candidate for a
+separate hardening ticket.
+
+---
+
+## Test plan
+
+- [ ] Deep-link to a non-first tab via URL hash; hard-reload 5–10 times — content renders every time
+- [ ] Click through all tabs; panel heights still differ per panel (adaptive height intact)
+- [ ] Page with a nested carousel / List component inside a tab panel
+- [ ] Page with images inside tab panels (exercises `waitForImages`)
+- [ ] Accordion expand/collapse inside a tab (triggers `adjustHeight`)
+- [ ] Window resize and orientation change
+- [ ] Author mode (`wcmmode` cookie present) and published view
+- [ ] Spot-check 2–3 other tabs v2 instances — shared clientlib
+
+**Finding all instances** — QueryBuilder at `/libs/cq/search/content/querydebug.html`:
+
+```
+path=/content/catdotcom
+type=nt:unstructured
+property=sling:resourceType
+property.value=deg/components/content/container/tabs/v2/tabs
+p.limit=-1
+```
+
+Repeat against `/content/experience-fragments/deg`.
+
+---
+
+## Key learnings
+
+1. **`.find()` is a descendant selector.** In nested-slider components, `.slick-active`,
+   `.slick-slide`, and `.slick-initialized` match far more than intended. Use child
+   combinators when targeting one slider's own structure.
+2. **`.outerHeight()` returns the first match.** A multi-element set silently measures the
+   wrong element rather than erroring.
+3. **Verify library behaviour against source, not assumption.** `setPosition` was pursued
+   as a fix for two rounds before checking that `setHeight()` is gated on
+   `adaptiveHeight === true` — which is not set here. The inline `height: 0px` was our
+   code all along.
+4. **Guard computed writes.** Any measured value written to the DOM should be validated
+   before it overwrites a working value.
