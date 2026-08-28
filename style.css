@@ -1,14 +1,14 @@
-/* Cat tooltip - standalone. Arrow uses a rotated square so the
-   triangle carries no seam; .cat-tooltip__inner paints over its
-   inner half, so __arrow must stay before __inner in the DOM. */
+/* Cat tooltip - standalone (no framework dependency).
+   __arrow must stay before __inner: the bubble paints over the
+   diamond's inner half via z-index, forming the triangle. */
 
 .auth .cat-tooltip {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 1070;
+  z-index: 99999;
   display: block;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  padding: 8px 0;
   visibility: hidden;
   opacity: 0;
   transition: opacity 0.15s ease-in-out;
@@ -21,22 +21,25 @@
 
 .auth .cat-tooltip__inner {
   position: relative;
-  max-width: 300px;
-  padding: 8px 14px;
+  max-width: 250px;
+  padding: .5rem;
   font-size: 14px;
-  color: #1a1a1a;
+  color: #000;
   text-align: center;
+  white-space: nowrap;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(31, 31, 31, 0.24);
+  box-shadow: 0 2px 12px 0 rgba(31, 31, 31, .24);
 }
 
 .auth .cat-tooltip__arrow {
   position: absolute;
+  z-index: -1;
   width: 10px;
   height: 10px;
   margin-left: -5px;
   background-color: #fff;
+  box-shadow: 0 2px 12px 0 rgba(31, 31, 31, .24);
   transform: rotate(45deg);
 }
 
