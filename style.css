@@ -1,0 +1,49 @@
+/* Cat tooltip - standalone. Arrow uses a rotated square so the
+   triangle carries no seam; .cat-tooltip__inner paints over its
+   inner half, so __arrow must stay before __inner in the DOM. */
+
+.auth .cat-tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1070;
+  display: block;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.auth .cat-tooltip.is-visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+.auth .cat-tooltip__inner {
+  position: relative;
+  max-width: 300px;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #1a1a1a;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(31, 31, 31, 0.24);
+}
+
+.auth .cat-tooltip__arrow {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background-color: #fff;
+  transform: rotate(45deg);
+}
+
+.auth .cat-tooltip[data-placement="bottom"] .cat-tooltip__arrow {
+  top: 3px;
+}
+
+.auth .cat-tooltip[data-placement="top"] .cat-tooltip__arrow {
+  bottom: 3px;
+}
