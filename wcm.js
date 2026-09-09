@@ -1,29 +1,9 @@
-$compareHeader.on('click', function () {
-  if (checkAllExpandedButton.animating) { return; }
-  checkAllExpandedButton.animating = true;
+// every event that fired
+dataLayer.filter(o => o.event).map(o => o.event)
 
-  const $header = $(this);
+// count by name — catches duplicates
+dataLayer.filter(o => o.event)
+  .reduce((a,o) => (a[o.event]=(a[o.event]||0)+1, a), {})
 
-  if ($header.hasClass('closed')) {
-    // show things
-    const $inner = $header.removeClass('closed').nextUntil($compareHeader).show().find('.cell--inner');
-    $inner.slideDown();
-    $inner.promise().done(() => {
-      checkAllExpandedButton.animating = false;
-    });
-  } else {
-    // hide things
-    const $inner = $header.addClass('closed').nextUntil($compareHeader).find('.cell--inner');
-    $inner.slideUp();
-    $inner.promise().done(() => {
-      $inner.closest('tr').hide();
-      checkAllExpandedButton.animating = false;
-    });
-  }
-
-  if (isAllExpandedButton()) {
-    $compareExpandCollapseBtn.text($compareExpandCollapseBtn.data('close'));
-  } else {
-    $compareExpandCollapseBtn.text($compareExpandCollapseBtn.data('open'));
-  }
-});
+// full objects, inspectable
+console.table(dataLayer.filter(o => o.event))
