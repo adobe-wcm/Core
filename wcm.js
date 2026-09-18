@@ -1,9 +1,2 @@
-// every event that fired
-dataLayer.filter(o => o.event).map(o => o.event)
+Deliver high-quality frontend code with strong focus on performance, security, and maintainability. Mentor junior team members through code reviews, pairing, and structured training sessions. Support team coordination and task planning to ensure smooth delivery. Maintain clear, proactive communication with clients to align on requirements, timelines, and expectations
 
-// count by name — catches duplicates
-dataLayer.filter(o => o.event)
-  .reduce((a,o) => (a[o.event]=(a[o.event]||0)+1, a), {})
-
-// full objects, inspectable
-console.table(dataLayer.filter(o => o.event))
