@@ -4,4 +4,6 @@ Deliver high-quality frontend code with strong focus on performance, security, a
 Actively participating in Deloitte's GenW.AI Academy, completing the technical assessment and building a Due Diligence POC using a Flowise multi-agent flow with an Appsmith frontend. Continuing to pursue AI/GenAI certifications to strengthen technical depth and support Deloitte's broader GenAI capability building initiatives
 
 
+Contributing to firm-building initiatives by participating in candidate interviews to support talent acquisition, and creating reusable technical assets to improve team efficiency. Mentoring junior developers to strengthen their skills and delivery quality. Contributed to the GenW.AI Academy POC team, supporting the firm's broader GenAI capability-building efforts."
+
 
