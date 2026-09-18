@@ -1,9 +1,1 @@
-Deliver high-quality frontend code with strong focus on performance, security, and maintainability. Mentor junior team members through code reviews, pairing, and structured training sessions. Support team coordination and task planning to ensure smooth delivery. Maintain clear, proactive communication with clients to align on requirements, timelines, and expectations
-
-
-Actively participating in Deloitte's GenW.AI Academy, completing the technical assessment and building a Due Diligence POC using a Flowise multi-agent flow with an Appsmith frontend. Continuing to pursue AI/GenAI certifications to strengthen technical depth and support Deloitte's broader GenAI capability building initiatives
-
-
-Contributing to firm-building initiatives by participating in candidate interviews to support talent acquisition, and creating reusable technical assets to improve team efficiency. Mentoring junior developers to strengthen their skills and delivery quality. Contributed to the GenW.AI Academy POC team, supporting the firm's broader GenAI capability-building efforts."
-
-
+Focused on grooming junior team members by conducting regular technical sessions to strengthen their skills and confidence. Ensuring timely completion of Me@D snapshots and talent compliance activities for the team, while fostering a collaborative and growth-oriented team environment
