@@ -1,18 +1,66 @@
-Hero Carousel — Mobile Layout Defect
-Component: deg/components/content/container/carousel/v3 (hero display)
-Environment: authorqa · Chrome DevTools @ 440px
-Symptom: Hero teasers render blank/offset on mobile; slide 5 shows overlapping headings from two slides.
-Root cause
-The hero teaser uses a full-bleed hack in the teaser clientlib:
-Css
-The existing mobile override (@media max-width: 991px) resets right, left and width — but not margin-left. At 440px the surviving margin-left: -50vw = −220px, pulling every hero teaser half a viewport left inside its slide. Content lands outside the visible box, and each teaser bleeds into the adjacent slide, producing the doubled headings.
-Slides 2–4 appeared fine only because their shorter content still fell within the visible area.
-Fix
-Teaser clientlib, existing @media screen and (max-width: 991px) block:
-Css
-Verification
-Js
-All five slides render correctly at 440px; no overlap at the infinite-loop boundary.
-Secondary findings (separate tickets)
-height: auto overridden by inline style — .auth .carousel--hero .carousel__wrapper .teaser { height: auto } loses to the server-rendered style="height: 535px". Fixed here with !important; better fix is to stop emitting the desktop height at mobile.
-Clone/offscreen slides not lazy-loaded — slick moves slides via transform, which fires no scroll event, so lazysizes never unveils them. Addressed by calling lazySizes.loader.unveil() on init/setPosition/beforeChange.
+# Investigation: Form Validation Failure After Cookie Consent — F-2097 (Dealer Contact, Mining)
+
+**Page:** `wwwqa.aws.cat.com/en_US/by-industry/mining/dealer-contact.html`
+**Form:** F-2097 (`F2097-FV0001.js`, Salesforce-hosted client-side validation)
+**Status:** Root cause identified; scope confirmation pending
+
+---
+
+## Symptom
+
+Form field validation (required-field and invalid-format error messages) behaves correctly under normal conditions, but breaks in a specific scenario:
+
+| Scenario | Validation behavior |
+|---|---|
+| Cookie consent **not accepted** (no action, or Reject) | Works correctly — single clean error message per field, updates in real time |
+| Cookie consent **accepted** ("I Accept") | Breaks — overlapping/duplicate error messages, stale text, layout shifts, inconsistent updates |
+
+No JavaScript errors are thrown in either state. jQuery version is unchanged before/after consent. jQuery Validate is present on the page but never binds to this form in either state — ruling out a validation-library conflict as the cause.
+
+---
+
+## Root Cause
+
+`evergage.min.js` — Salesforce Interaction Studio (Marketing Cloud Personalization) — is loaded via a GTM tag (`GTM-5JB4X4`) from:
+
+```
+https://cdn.evgnet.com/beacon/caterpillar/global_impl/scripts/evergage.min.js
+```
+
+This tag is gated behind OneTrust consent categories C0002/C0003/C0004 (Performance/Functional/Targeting). Before consent, only C0001 (Strictly Necessary) is active, so the tag never fires and Evergage never loads. Clicking "I Accept" grants all optional categories at once, the GTM trigger condition is satisfied, and Evergage loads and initializes on the page.
+
+Evergage is loaded from the **Salesforce end** (tenant-specific build path: `.../caterpillar/global_impl/scripts/evergage.min.js`), and once initialized it runs live personalization/targeting logic scoped by page URL — separate from and unrelated to the `F2097-FV0001.js` validation script itself.
+
+---
+
+## Tests Performed
+
+### Test 1 — Block Evergage directly
+Using DevTools → Request Conditions, blocked all requests matching `https://cdn.evgnet.com/*`. With the block active, cookies were accepted and the form was retested.
+
+**Result:** Validation worked correctly with Evergage blocked, even with cookies accepted. Removing the block reproduced the bug immediately. This isolates Evergage as the trigger.
+
+### Test 2 — Cross-page comparison (same component, different path)
+The same AEM authoring/component setup (same form, same clientlibs) was checked on a different page/URL where GTM and Evergage both load identically, cookies accepted.
+
+**Result:** Validation works correctly on that page despite Evergage being loaded there too. No JS errors, no jQuery differences, same script inventory.
+
+**Conclusion from Test 2:** Evergage's mere presence/load is not sufficient to cause the bug — its effect is path/URL-specific. This means a Salesforce Interaction Studio campaign or targeting rule scoped to `by-industry/mining/dealer-contact.html` (or this form specifically) is the actual trigger, not the SDK generally.
+
+---
+
+## Conclusion
+
+The validation failure is caused by Salesforce Interaction Studio (Evergage), which loads on Accept via GTM and runs page-targeted personalization logic. The problem is **path/URL-specific**, not present on other pages using the identical form component and identical script stack. This points to an active Interaction Studio campaign or content-targeting rule scoped to this specific page or form container, which interferes with the form's DOM/validation state after it initializes — independent of and without modifying `F2097-FV0001.js` or throwing any script error.
+
+This is not a defect in the AEM component, the form component clientlib, or the Salesforce validation script. No code fix is indicated on the AEM/form side pending confirmation of the targeting rule.
+
+---
+
+## Next Steps
+
+1. **Identify the exact consent category** required to trigger the bug (test C0002/C0003/C0004 individually via Cookie Settings or `OnetrustActiveGroups`, one at a time, in a fresh session) to narrow which category is actually responsible.
+2. **Escalate to the Interaction Studio / Marketing Cloud Personalization admin team** to review campaigns/experiences currently targeting `by-industry/mining/dealer-contact.html` (or the `.dynamic-form`/`#F-2097` container).
+3. **Request exclusion or pause** of the identified campaign for this page, or re-scope its targeting away from the form container.
+4. **Re-test** validation on this page post-exclusion, with cookies accepted, to confirm resolution.
+5. No changes required to `F2097-FV0001.js`, `formsComponentV3.js`, or AEM component configuration unless the Interaction Studio investigation reveals otherwise.
