@@ -1,1 +1,1 @@
-console.log(window.SalesforceInteractions && window.SalesforceInteractions.getCampaigns ? window.SalesforceInteractions.getCampaigns() : 'no getCampaigns API');
+jsProcessor="[default:none,min:gcc;compilationLevel=whitespace;languageIn=ECMASCRIPT_2020;languageOut=ECMASCRIPT_2020]"
