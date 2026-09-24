@@ -1,9 +1,10 @@
-No code changes needed from our side.
-Not a code defect. F2097-FV0001.js, the AEM form component, and Salesforce validation logic are all confirmed clean — no JS errors, no library conflicts, identical behavior everywhere.
+Root cause: not a code issue. Checked F2097-FV0001.js, the AEM form component, and Salesforce validation — all clean, no JS errors, no library conflicts, same behavior everywhere.
 Steps:
-Form validation breaks only after clicking "I Accept" on cookies. Reject = works fine.
-Traced to evergage.min.js (Salesforce Interaction Studio), loaded via GTM tag, which only fires post-consent.
-Tested each cookie category individually: Functional → works, Performance → works, Targeting → breaks.
-Confirmed via GTM container source: the Evergage tag is gated on the functionality_storage consent signal — which by standard convention should map to the Functional category, not Targeting.
-Since the tag only fires on Targeting (not Functional) despite requiring functionality_storage, this proves OneTrust's category-to-consent-signal mapping is misconfigured on this site — Targeting is incorrectly wired to grant functionality_storage.
-Conclusion: This is a OneTrust/GTM consent-mapping misconfiguration, not an AEM or form-code issue. No code changes needed on our side.
+Validation only breaks after clicking "I Accept" on cookies. Reject works fine.
+Traced it to evergage.min.js (Salesforce Interaction Studio), loaded via a GTM tag that only fires post-consent.
+Tested each cookie category separately — Functional: works, Performance: works, Targeting: breaks.
+Checked the GTM tag source directly — it's gated on the functionality_storage consent signal, which normally maps to Functional, not Targeting.
+Since it only fires when Targeting is accepted (not Functional), the category-to-consent-signal mapping in OneTrust is wrong on this site — Targeting is wired to grant functionality_storage instead of Functional.
+Also, the same form works fine on other pages even with Evergage loaded and cookies accepted, so this might also be an Interaction Studio campaign scoped to just this page/URL rather than the script itself. Needs someone with dashboard access to confirm what's targeting this path.
+No code changes needed from our side.
+Assigning to Marketing Ops / OneTrust-GTM team for the consent mapping, and Interaction Studio team to check campaign targeting for this URL.
