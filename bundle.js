@@ -40,7 +40,7 @@
     const row = {
       url: u,
       rawUrl,
-      file: new URL(u).pathname.split('/').slice(-4).join('/'), type,
+      type,
       minKB: '', rawKB: '', ratio: '', minIndentedPct: '', verdict: '',
       clientlibPath: new URL(rawUrl).pathname.replace('/etc.clientlibs/', '/apps/').replace(/\.(js|css)$/i, '')
     };
@@ -76,11 +76,12 @@
   rows.sort((a, b) => (order[a.verdict] ?? 9) - (order[b.verdict] ?? 9) || (b.minKB - a.minKB));
   const count = v => rows.filter(r => r.verdict.startsWith(v)).length;
   console.log(`%cFAILING: ${count('FAILING')} | PARTIAL: ${count('PARTIAL')} | NO GAIN: ${count('NO GAIN')} | OK: ${count('OK')}`, 'font-weight:bold;font-size:13px');
-  console.table(rows.map(({ url, rawUrl, ...r }) => r));
+  console.table(rows.map(({ rawUrl, ...r }) => r));
 
   // CSV: only files that are NOT actually minified, served .min URL only
   const bad = rows.filter(r => /^(FAILING|PARTIAL)/.test(r.verdict)).map(({ rawUrl, ...r }) => r);
   if (!bad.length) { console.log('No unminified clientlib files on this page.'); return; }
+  console.log('%cUnminified files (full URLs):\n' + bad.map(r => r.url).join('\n'), 'font-weight:bold');
   const cols = Object.keys(bad[0]);
   const csv = [cols.join(','), ...bad.map(r => cols.map(c => `"${String(r[c]).replace(/"/g, '""')}"`).join(','))].join('\n');
   const a = document.createElement('a');
