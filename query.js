@@ -147,4 +147,3 @@
   document.body.appendChild(a); a.click(); a.remove();
   console.log('Downloaded cat-html-compression.csv');
 })();
-p.properties=jcr:path%20jsProcessor
