@@ -1,82 +1,91 @@
-(() => {
-  const doc = document.documentElement;
-  const over = () => doc.scrollWidth - doc.clientWidth;
-  const base = over();
-  console.log('%c=== OVERFLOW DIAGNOSTIC ===', 'font-weight:bold');
-  console.log('viewport:', doc.clientWidth, '| scrollWidth:', doc.scrollWidth, '| overflow:', base);
-  if (base <= 0) return console.log('No overflow. Scroll position or state differs.');
+// Find clientlibs where JS/CSS minification silently fails (processor error -> AEM serves raw source)
+// Run in DevTools Console on AEM AUTHOR (logged in), e.g. http://localhost:4502 or authorqa
+(async () => {
+  const CFG = { ROOT: '/apps', CONCURRENCY: 3 };
 
-  // --- 1. bisect by hiding ---
-  const hide = el => { const p = el.style.display; el.style.display = 'none'; const r = over(); el.style.display = p; return r; };
-  const chain = [];
-  let node = document.body;
-  outer: while (true) {
-    for (const child of node.children) {
-      if (hide(child) <= 0) { chain.push(child); node = child; continue outer; }
-    }
-    break;
-  }
-  console.log('%c--- culprit chain (outer to inner) ---', 'font-weight:bold');
-  chain.forEach((el, i) => console.log(' '.repeat(i*2) + '↳', el.tagName, el.className || '(no class)', el));
-  const culprit = chain[chain.length - 1] || document.body;
-  console.log('%cCULPRIT:', 'color:red;font-weight:bold', culprit);
-
-  // --- 2. full box report on culprit + ancestors ---
-  console.log('%c--- box model up the tree ---', 'font-weight:bold');
-  let el = culprit;
-  while (el && el !== doc) {
-    const c = getComputedStyle(el), r = el.getBoundingClientRect();
-    console.log((el.className || el.tagName).slice(0,45),
-      '| L', Math.round(r.left), 'R', Math.round(r.right),
-      '| w', c.width, '| pad', c.paddingLeft, c.paddingRight,
-      '| mar', c.marginLeft, c.marginRight,
-      '| pos', c.position, '| ovf', c.overflowX,
-      '| tf', c.transform === 'none' ? '-' : c.transform);
-    el = el.parentElement;
-  }
-
-  // --- 3. pseudo-elements on culprit subtree ---
-  console.log('%c--- pseudo-elements extending past viewport ---', 'font-weight:bold');
-  const w = doc.clientWidth;
-  let foundPseudo = false;
-  [culprit, ...culprit.querySelectorAll('*')].forEach(e => {
-    ['::before','::after'].forEach(ps => {
-      const c = getComputedStyle(e, ps);
-      if (c.content === 'none' || !c.content) return;
-      const suspect = [c.width, c.minWidth, c.maxWidth, c.marginRight, c.right, c.left, c.transform]
-        .filter(v => v && (v.includes('vw') || (parseFloat(v) > w) || (parseFloat(v) < 0)));
-      if (suspect.length) { foundPseudo = true; console.log(e.className || e.tagName, ps, c.width, c.marginRight, c.left, c.right, c.position); }
-    });
+  // 1. All clientlib folders via QueryBuilder
+  const qs = new URLSearchParams({
+    path: CFG.ROOT,
+    type: 'cq:ClientLibraryFolder',
+    'p.limit': '-1',
+    'p.hits': 'selective',
+    'p.properties': 'jcr:path categories jsProcessor cssProcessor allowProxy embed'
   });
-  if (!foundPseudo) console.log('(none suspicious)');
+  const res = await (await fetch('/bin/querybuilder.json?' + qs, { credentials: 'same-origin' })).json();
+  const libs = res.hits || [];
+  console.log(`Clientlib folders found under ${CFG.ROOT}: ${libs.length}`);
 
-  // --- 4. vw units anywhere ---
-  console.log('%c--- vw units in stylesheets ---', 'font-weight:bold');
-  let vwHits = 0;
-  for (const sheet of document.styleSheets) {
-    let rules; try { rules = sheet.cssRules; } catch { continue; }
-    const scan = rs => { for (const r of rs) {
-      if (r.cssRules) scan(r.cssRules);
-      else if (r.cssText && /\d+vw/.test(r.cssText) && !/100vh/.test(r.selectorText||'')) { console.log(r.cssText.slice(0,160)); vwHits++; }
-    }};
-    scan(rules);
+  const arr = v => Array.isArray(v) ? v.join(' | ') : (v ?? '');
+  const urlFor = (lib, ext) => {
+    const p = lib['jcr:path'];
+    const proxy = lib.allowProxy === true || lib.allowProxy === 'true';
+    return proxy && p.startsWith('/apps/') ? '/etc.clientlibs/' + p.slice(6) + ext : p + ext;
+  };
+  const get = async url => {
+    try {
+      const r = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+      return r.ok ? await r.text() : null;
+    } catch { return null; }
+  };
+  const indentPct = text => {
+    const lines = text.split('\n').filter(l => l.trim());
+    const n = Math.max(lines.length, 1);
+    return Math.round(lines.filter(l => /^[ \t]{2,}/.test(l)).length / n * 100);
+  };
+
+  // 2. Compare raw (.js/.css) vs minified (.min.js/.min.css) output per clientlib
+  async function check(lib, type) {
+    const ext = type === 'JS' ? '.js' : '.css';
+    const row = {
+      path: lib['jcr:path'], type,
+      categories: arr(lib.categories),
+      processor: arr(type === 'JS' ? lib.jsProcessor : lib.cssProcessor) || '(global default)',
+      embeds: arr(lib.embed),
+      rawKB: '', minKB: '', ratio: '', minIndentedPct: '', verdict: ''
+    };
+    const [raw, min] = await Promise.all([get(urlFor(lib, ext)), get(urlFor(lib, '.min' + ext))]);
+    if (!raw || !raw.trim()) { row.verdict = 'NONE'; return row; }
+    const rb = new Blob([raw]).size;
+    row.rawKB = (rb / 1024).toFixed(1);
+    if (!min) { row.verdict = 'MIN FETCH FAILED'; return row; }
+    const mb = new Blob([min]).size;
+    const ratio = mb / rb;
+    const ind = indentPct(min);
+    row.minKB = (mb / 1024).toFixed(1);
+    row.ratio = ratio.toFixed(2);
+    row.minIndentedPct = ind;
+    if (rb < 1024) row.verdict = 'TINY';
+    else if (ratio > 0.9 && ind > 10) row.verdict = 'FAILING (unminified)';
+    else if (ratio > 0.9) row.verdict = 'NO GAIN (pre-minified?)';
+    else if (ind > 10) row.verdict = 'PARTIAL';
+    else row.verdict = 'OK';
+    return row;
   }
-  if (!vwHits) console.log('(none)');
 
-  // --- 5. positive right margins on wide elements ---
-  console.log('%c--- elements with margin-right pushing past viewport ---', 'font-weight:bold');
-  let marHits = 0;
-  document.querySelectorAll('*').forEach(e => {
-    const c = getComputedStyle(e), r = e.getBoundingClientRect();
-    const mr = parseFloat(c.marginRight) || 0;
-    if (mr > 0 && r.right + mr > w + 1) { console.log(Math.round(r.right), '+', mr, '=', Math.round(r.right+mr), e.className || e.tagName); marHits++; }
-  });
-  if (!marHits) console.log('(none)');
+  const jobs = libs.flatMap(l => [[l, 'JS'], [l, 'CSS']]);
+  const rows = [];
+  for (let i = 0; i < jobs.length; i += CFG.CONCURRENCY) {
+    rows.push(...await Promise.all(jobs.slice(i, i + CFG.CONCURRENCY).map(([l, t]) => check(l, t))));
+    if (rows.length % 60 < CFG.CONCURRENCY) console.log(`Checked ${rows.length}/${jobs.length}`);
+  }
 
-  // --- 6. html/body ---
-  console.log('%c--- html / body ---', 'font-weight:bold');
-  [['html',doc],['body',document.body]].forEach(([n,e]) => {
-    const c = getComputedStyle(e);
-    console.log(n, '| w', c.width, '| pad', c.paddingLeft, c.paddingRight, '| mar', c.marginLeft, c.marginRight, '| ovf', c.overflowX, '| sw', e.scrollWidth, '| rect', Math.round(e.getBoundingClientRect().right));
-  });
+  // 3. Report
+  const order = { 'FAILING (unminified)': 0, 'PARTIAL': 1, 'MIN FETCH FAILED': 2, 'NO GAIN (pre-minified?)': 3, 'OK': 4, 'TINY': 5, 'NONE': 6 };
+  rows.sort((a, b) => a.type.localeCompare(b.type) * -1 || (order[a.verdict] ?? 9) - (order[b.verdict] ?? 9) || (b.rawKB - a.rawKB));
+  const withJs = rows.filter(r => r.verdict !== 'NONE');
+  const count = (v, t) => withJs.filter(r => r.verdict === v && r.type === t).length;
+  const line = t => `${t}: ${withJs.filter(r => r.type === t).length} | FAILING: ${count('FAILING (unminified)', t)} | PARTIAL: ${count('PARTIAL', t)} | NO GAIN: ${count('NO GAIN (pre-minified?)', t)} | OK: ${count('OK', t)}`;
+  console.log(
+    `%c${line('JS')}\n${line('CSS')}`,
+    'font-weight:bold;font-size:13px'
+  );
+  console.table(withJs);
+
+  const cols = Object.keys(rows[0] || {});
+  const csv = [cols.join(','), ...withJs.map(r => cols.map(c => `"${String(r[c]).replace(/"/g, '""')}"`).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'clientlib-minification-status.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  console.log('Downloaded clientlib-minification-status.csv');
 })();
