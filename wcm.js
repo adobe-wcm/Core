@@ -1,44 +1,20 @@
-// Site-wide HTML minification evaluation (ticket 2877209, Req 9)
-// Run in DevTools Console (or Sources > Snippets) on https://www.cat.com/en_US.html – reload the page first.
+// Site-wide CSS minification report – every CSS file loaded across cat.com (ticket 2877209)
+// Run in DevTools > Sources > Snippets on https://www.cat.com/en_US.html (reload first), Ctrl+Enter.
 // Stop anytime: window.__stopCrawl = true   (results so far are still exported)
 //
-// Per page:  raw HTML size, real transferred size (server gzip/br), gzip of current HTML,
-//            minified+gzip (aggressive = upper bound, safe = realistic), saving after gzip.
-// Output:    cat-html-minify-pages.csv (one row per page, full URL)
-//            cat-html-minify-templates.csv (averages per template)
+// Covers: clientlib CSS (/etc.clientlibs/*.min.css), non-clientlib CSS (e.g. dynamic /content/*.css), third-party CSS.
+// Output: cat-css-minification.csv (all CSS files, full URL, verdict) + console summary.
 (async () => {
-  const CFG = {
-    PATH_PREFIX: '/en_US',
-    MAX_PAGES: 1000,
-    CONCURRENCY: 3,
-    DELAY_MS: 200,
-    MAX_SITEMAPS: 50
-  };
+  const CFG = { PATH_PREFIX: '/en_US', MAX_PAGES: 1000, CONCURRENCY: 4, DELAY_MS: 200, MAX_SITEMAPS: 50 };
   window.__stopCrawl = false;
-  try { performance.setResourceTimingBufferSize(100000); } catch {}
   const origin = location.origin;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const kb = n => +(n / 1024).toFixed(1);
   const bytes = s => new Blob([s]).size;
-  const gz = async s => (await new Response(new Blob([s]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()).byteLength;
   const pageUrl = (href, base = origin) => {
     try { const u = new URL(href, base); u.hash = ''; u.search = ''; return u.href; } catch { return null; }
   };
   const isPage = u => !!u && u.startsWith(origin + CFG.PATH_PREFIX) && /\.html$/i.test(new URL(u).pathname);
-
-  // ---------- minifiers ----------
-  const aggressive = h => h
-    .replace(/<!--(?!\[if)[\s\S]*?-->/g, '')
-    .replace(/>\s+</g, '><')
-    .replace(/\s{2,}/g, ' ');
-  const PRESERVE = /<(pre|textarea|script|style)\b[^>]*>[\s\S]*?<\/\1\s*>|<!--\[if[\s\S]*?<!\[endif\]-->|<!--#[\s\S]*?-->/gi;
-  const safe = h => {
-    const re = new RegExp(PRESERVE.source, 'gi');
-    const compact = s => s.replace(/<!--[\s\S]*?-->/g, '').replace(/[ \t\f\r]*\n\s*/g, '\n');
-    let out = '', last = 0, m;
-    while ((m = re.exec(h))) { out += compact(h.slice(last, m.index)) + m[0]; last = m.index + m[0].length; }
-    return out + compact(h.slice(last));
-  };
 
   // ---------- 1. discover pages (sitemap + links) ----------
   const queue = [], queued = new Set();
@@ -66,126 +42,122 @@
     console.log(`Sitemaps read: ${seen.size}, pages queued: ${queued.size}`);
   } catch {}
 
-  // ---------- 2. measure each page ----------
-  const timingFor = async url => {
-    for (let i = 0; i < 10; i++) {
-      const e = performance.getEntriesByName(url, 'resource').filter(x => x.initiatorType === 'fetch').pop();
-      if (e && e.responseEnd > 0) return e;
-      await sleep(50);
-    }
-    return null;
-  };
-
-  async function measure(url) {
-    const row = {
-      url, status: '', template: '', contentEncoding: '',
-      rawKB: '', transferredKB: '', gzipKB: '',
-      minRawKB: '', minGzipKB: '', savingKB: '', savingPct: '',
-      safeMinGzipKB: '', safeSavingKB: '', safeSavingPct: ''
-    };
+  // ---------- 2. crawl pages, collect every stylesheet ----------
+  const cssFiles = new Map(); // url -> { pageCount, samplePage }
+  let crawled = 0;
+  async function crawl(url) {
     try {
       const r = await fetch(url, { cache: 'no-store', credentials: 'same-origin' });
-      const html = await r.text();
-      row.status = r.status;
-      row.contentEncoding = r.headers.get('content-encoding') || 'NONE';
-      if (!(r.headers.get('content-type') || '').includes('html')) return row;
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      row.template = doc.querySelector('meta[name="template"]')?.content || '(unknown)';
-      if (queued.size < CFG.MAX_PAGES) doc.querySelectorAll('a[href]').forEach(a => enqueue(pageUrl(a.getAttribute('href'), url)));
-      if (r.status !== 200) return row;
-
-      const t = await timingFor(url);
-      const aggr = aggressive(html), sf = safe(html);
-      const [gRaw, gAggr, gSafe] = [await gz(html), await gz(aggr), await gz(sf)];
-      row.rawKB = kb(bytes(html));
-      row.transferredKB = t?.encodedBodySize ? kb(t.encodedBodySize) : '';
-      row.gzipKB = kb(gRaw);
-      row.minRawKB = kb(bytes(aggr));
-      row.minGzipKB = kb(gAggr);
-      row.savingKB = kb(gRaw - gAggr);
-      row.savingPct = +((1 - gAggr / gRaw) * 100).toFixed(1);
-      row.safeMinGzipKB = kb(gSafe);
-      row.safeSavingKB = kb(gRaw - gSafe);
-      row.safeSavingPct = +((1 - gSafe / gRaw) * 100).toFixed(1);
-    } catch { row.status = 'ERR'; }
-    return row;
+      if (!r.ok || !(r.headers.get('content-type') || '').includes('html')) return;
+      const doc = new DOMParser().parseFromString(await r.text(), 'text/html');
+      doc.querySelectorAll('link[rel~="stylesheet"][href]').forEach(l => {
+        try {
+          const u = new URL(l.getAttribute('href'), url);
+          u.hash = '';
+          const e = cssFiles.get(u.href) || { pageCount: 0, samplePage: url };
+          e.pageCount++;
+          cssFiles.set(u.href, e);
+        } catch {}
+      });
+      doc.querySelectorAll('a[href]').forEach(a => enqueue(pageUrl(a.getAttribute('href'), url)));
+    } catch {}
   }
-
-  const rows = [];
   let idx = 0, active = 0;
   async function worker() {
     while (!window.__stopCrawl && idx < CFG.MAX_PAGES) {
       if (idx >= queue.length) { if (active === 0) break; await sleep(100); continue; }
       const url = queue[idx++];
-      active++;
-      rows.push(await measure(url));
-      active--;
-      if (rows.length % 50 === 0) console.log(`Measured ${rows.length} pages | queue ${queue.length}`);
+      active++; await crawl(url); active--; crawled++;
+      if (crawled % 50 === 0) console.log(`Pages ${crawled} | queue ${queue.length} | unique CSS files ${cssFiles.size}`);
       await sleep(CFG.DELAY_MS);
     }
   }
   await Promise.all(Array.from({ length: CFG.CONCURRENCY }, worker));
+  console.log(`Crawl done: ${crawled} pages, ${cssFiles.size} unique CSS files. Checking...`);
 
-  // ---------- 3. aggregate ----------
-  const ok = rows.filter(r => r.status === 200 && typeof r.savingPct === 'number');
-  const avg = (list, k) => list.length ? +(list.reduce((s, r) => s + (+r[k] || 0), 0) / list.length).toFixed(1) : 0;
-  const median = (list, k) => {
-    const v = list.map(r => +r[k]).filter(n => !isNaN(n)).sort((a, b) => a - b);
-    return v.length ? v[Math.floor(v.length / 2)] : 0;
+  // ---------- 3. check each CSS file ----------
+  const MIN_RE = /\.min(\.[0-9a-f]{8,})?\.css$/i;
+  const get = async u => {
+    try { const r = await fetch(u, { cache: 'force-cache' }); return r.ok ? await r.text() : null; } catch { return null; }
+  };
+  const indentPct = t => {
+    const lines = t.split('\n').filter(l => l.trim());
+    const n = Math.max(lines.length, 1);
+    return Math.round(lines.filter(l => /^[ \t]{2,}/.test(l)).length / n * 100);
+  };
+  // conservative CSS minify estimate (comments + whitespace; strings untouched)
+  const cssMin = css => {
+    let out = '', last = 0, m;
+    const re = /\/\*[\s\S]*?\*\/|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g;
+    const compact = s => s.replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/:\s+/g, ':').split(';}').join('}');
+    while ((m = re.exec(css))) {
+      out += compact(css.slice(last, m.index));
+      if (!m[0].startsWith('/*') || m[0].startsWith('/*!')) out += m[0];
+      last = m.index + m[0].length;
+    }
+    return (out + compact(css.slice(last))).trim();
   };
 
-  const summary = {
-    pagesMeasured: ok.length,
-    pagesSkipped: rows.length - ok.length,
-    avgRawKB: avg(ok, 'rawKB'),
-    avgTransferredKB: avg(ok, 'transferredKB'),
-    avgGzipKB: avg(ok, 'gzipKB'),
-    avgMinGzipKB: avg(ok, 'minGzipKB'),
-    avgSavingKB_upperBound: avg(ok, 'savingKB'),
-    avgSavingPct_upperBound: avg(ok, 'savingPct'),
-    medianSavingPct_upperBound: median(ok, 'savingPct'),
-    avgSafeSavingKB: avg(ok, 'safeSavingKB'),
-    avgSafeSavingPct: avg(ok, 'safeSavingPct'),
-    maxSavingKB: ok.length ? Math.max(...ok.map(r => r.savingKB)) : 0
-  };
+  async function check(url, info) {
+    const u = new URL(url);
+    const source = u.origin !== origin ? 'third-party'
+      : u.pathname.startsWith('/etc.clientlibs/') ? 'clientlib' : 'non-clientlib (same origin)';
+    const row = {
+      url, source, verdict: '', sizeKB: '', rawTwinKB: '', ratio: '',
+      indentedPct: '', commentPct: '', estSavingPct: '',
+      clientlibPath: source === 'clientlib' ? u.pathname.replace('/etc.clientlibs/', '/apps/').replace(MIN_RE, '').replace(/\.css$/i, '') : '',
+      pageCount: info.pageCount, samplePage: info.samplePage
+    };
+    const css = await get(url);
+    if (css === null) { row.verdict = source === 'third-party' ? 'UNCHECKED (CORS)' : 'FETCH FAILED'; return row; }
+    const size = bytes(css);
+    const comments = (css.match(/\/\*(?!!)[\s\S]*?\*\//g) || []).reduce((a, c) => a + c.length, 0);
+    row.sizeKB = kb(size);
+    row.indentedPct = indentPct(css);
+    row.commentPct = size ? +((comments / size) * 100).toFixed(1) : 0;
+    row.estSavingPct = size ? +((1 - bytes(cssMin(css)) / size) * 100).toFixed(1) : 0;
 
-  const byTpl = {};
-  ok.forEach(r => (byTpl[r.template] ||= []).push(r));
-  const templates = Object.entries(byTpl).map(([template, list]) => ({
-    template,
-    pages: list.length,
-    avgRawKB: avg(list, 'rawKB'),
-    avgTransferredKB: avg(list, 'transferredKB'),
-    avgMinGzipKB: avg(list, 'minGzipKB'),
-    avgSavingKB: avg(list, 'savingKB'),
-    avgSavingPct: avg(list, 'savingPct'),
-    avgSafeSavingKB: avg(list, 'safeSavingKB'),
-    avgSafeSavingPct: avg(list, 'safeSavingPct'),
-    sampleUrl: list[0].url
-  })).sort((a, b) => b.avgSavingKB - a.avgSavingKB);
+    if (size < 1024) { row.verdict = 'TINY'; return row; }
+
+    let notMin = row.indentedPct > 10 || row.commentPct > 3 || row.estSavingPct > 10;
+    if (source === 'clientlib' && MIN_RE.test(u.pathname)) {
+      const raw = await get(origin + u.pathname.replace(MIN_RE, '.css'));
+      if (raw) {
+        const rb = bytes(raw);
+        row.rawTwinKB = kb(rb);
+        row.ratio = +(size / rb).toFixed(2);
+        notMin = row.ratio > 0.9 && row.indentedPct > 10;
+      }
+    }
+    row.verdict = notMin ? 'NOT MINIFIED' : 'MINIFIED';
+    return row;
+  }
+
+  const list = [...cssFiles.entries()];
+  const rows = [];
+  for (let i = 0; i < list.length; i += CFG.CONCURRENCY) {
+    rows.push(...await Promise.all(list.slice(i, i + CFG.CONCURRENCY).map(([u, info]) => check(u, info))));
+  }
 
   // ---------- 4. report ----------
-  console.log(
-    `%cPages measured: ${summary.pagesMeasured} (skipped non-200: ${summary.pagesSkipped})\n` +
-    `Average raw HTML: ${summary.avgRawKB} KB | transferred today (gzip): ${summary.avgTransferredKB} KB\n` +
-    `Minification saving after gzip – upper bound: ${summary.avgSavingKB_upperBound} KB (${summary.avgSavingPct_upperBound}%), median ${summary.medianSavingPct_upperBound}%\n` +
-    `Minification saving after gzip – realistic (safe): ${summary.avgSafeSavingKB} KB (${summary.avgSafeSavingPct}%)`,
-    'font-weight:bold;font-size:13px'
-  );
-  console.table(summary);
-  console.table(templates);
+  const order = { 'NOT MINIFIED': 0, 'FETCH FAILED': 1, 'UNCHECKED (CORS)': 2, 'MINIFIED': 3, 'TINY': 4 };
+  rows.sort((a, b) => (order[a.verdict] ?? 9) - (order[b.verdict] ?? 9) || (b.sizeKB || 0) - (a.sizeKB || 0));
+  const cnt = (v, s) => rows.filter(r => r.verdict === v && (!s || r.source === s)).length;
+  const bySource = ['clientlib', 'non-clientlib (same origin)', 'third-party'].map(s =>
+    `${s}: ${rows.filter(r => r.source === s).length} files | MINIFIED ${cnt('MINIFIED', s)} | NOT MINIFIED ${cnt('NOT MINIFIED', s)} | TINY ${cnt('TINY', s)} | UNCHECKED ${cnt('UNCHECKED (CORS)', s) + cnt('FETCH FAILED', s)}`
+  ).join('\n');
+  console.log(`%cPages: ${crawled} | CSS files: ${rows.length} | MINIFIED: ${cnt('MINIFIED')} | NOT MINIFIED: ${cnt('NOT MINIFIED')} | TINY: ${cnt('TINY')}\n${bySource}`,
+    'font-weight:bold;font-size:13px');
+  console.table(rows);
+  const bad = rows.filter(r => r.verdict === 'NOT MINIFIED');
+  if (bad.length) console.log('%cNOT minified CSS (full URLs):\n' + bad.map(r => `${r.url}  (${r.sizeKB} KB, ${r.source})`).join('\n'), 'font-weight:bold;color:#c00');
 
-  const download = (name, data) => {
-    if (!data.length) return;
-    const cols = Object.keys(data[0]);
-    const csv = [cols.join(','), ...data.map(r => cols.map(c => `"${String(r[c] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-  };
-  download('cat-html-minify-pages.csv', rows);
-  download('cat-html-minify-templates.csv', templates);
-  download('cat-html-minify-summary.csv', [summary]);
-  console.log('Downloaded: cat-html-minify-pages.csv, cat-html-minify-templates.csv, cat-html-minify-summary.csv');
+  if (!rows.length) return;
+  const cols = Object.keys(rows[0]);
+  const csv = [cols.join(','), ...rows.map(r => cols.map(c => `"${String(r[c] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'cat-css-minification.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  console.log('Downloaded cat-css-minification.csv');
 })();
