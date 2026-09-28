@@ -1,91 +1,87 @@
-// Find clientlibs where JS/CSS minification silently fails (processor error -> AEM serves raw source)
-// Run in DevTools Console on AEM AUTHOR (logged in), e.g. http://localhost:4502 or authorqa
+// Clientlib minification check for PUBLISH / PROD (no login, no QueryBuilder)
+// Run in DevTools Console on any cat.com page. Repeat on one page per template.
+// Optional: paste extra /etc.clientlibs URLs (e.g. from cat-assets-minification.csv) into EXTRA_URLS.
 (async () => {
-  const CFG = { ROOT: '/apps', CONCURRENCY: 3 };
+  const EXTRA_URLS = [
+    // 'https://www.cat.com/etc.clientlibs/deg/.../site.min.abc123.js',
+  ];
+  const CONCURRENCY = 3;
 
-  // 1. All clientlib folders via QueryBuilder
-  const qs = new URLSearchParams({
-    path: CFG.ROOT,
-    type: 'cq:ClientLibraryFolder',
-    'p.limit': '-1',
-    'p.hits': 'selective',
-    'p.properties': 'jcr:path categories jsProcessor cssProcessor allowProxy embed'
-  });
-  const res = await (await fetch('/bin/querybuilder.json?' + qs, { credentials: 'same-origin' })).json();
-  const libs = res.hits || [];
-  console.log(`Clientlib folders found under ${CFG.ROOT}: ${libs.length}`);
+  const urls = new Set(EXTRA_URLS);
+  document.querySelectorAll('script[src], link[rel~="stylesheet"][href]').forEach(el => urls.add(el.src || el.href));
+  performance.getEntriesByType('resource').forEach(e => urls.add(e.name));
 
-  const arr = v => Array.isArray(v) ? v.join(' | ') : (v ?? '');
-  const urlFor = (lib, ext) => {
-    const p = lib['jcr:path'];
-    const proxy = lib.allowProxy === true || lib.allowProxy === 'true';
-    return proxy && p.startsWith('/apps/') ? '/etc.clientlibs/' + p.slice(6) + ext : p + ext;
-  };
-  const get = async url => {
+  const targets = [...urls].filter(u => {
     try {
-      const r = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
-      return r.ok ? await r.text() : null;
-    } catch { return null; }
+      const p = new URL(u, location.origin);
+      return p.origin === location.origin && p.pathname.startsWith('/etc.clientlibs/') && /\.(js|css)$/i.test(p.pathname);
+    } catch { return false; }
+  });
+  console.log(`Clientlib files found: ${targets.length}`);
+
+  const rawUrlOf = u => {
+    const p = new URL(u, location.origin);
+    p.search = '';
+    p.pathname = p.pathname.replace(/\.min(\.[0-9a-f]{8,})?\.(js|css)$/i, '.$2');
+    return p.href;
   };
-  const indentPct = text => {
-    const lines = text.split('\n').filter(l => l.trim());
+  const get = async u => {
+    try { const r = await fetch(u, { cache: 'force-cache' }); return r.ok ? await r.text() : null; } catch { return null; }
+  };
+  const indentPct = t => {
+    const lines = t.split('\n').filter(l => l.trim());
     const n = Math.max(lines.length, 1);
     return Math.round(lines.filter(l => /^[ \t]{2,}/.test(l)).length / n * 100);
   };
 
-  // 2. Compare raw (.js/.css) vs minified (.min.js/.min.css) output per clientlib
-  async function check(lib, type) {
-    const ext = type === 'JS' ? '.js' : '.css';
+  async function check(u) {
+    const type = /\.css$/i.test(new URL(u).pathname) ? 'CSS' : 'JS';
+    const rawUrl = rawUrlOf(u);
     const row = {
-      path: lib['jcr:path'], type,
-      categories: arr(lib.categories),
-      processor: arr(type === 'JS' ? lib.jsProcessor : lib.cssProcessor) || '(global default)',
-      embeds: arr(lib.embed),
-      rawKB: '', minKB: '', ratio: '', minIndentedPct: '', verdict: ''
+      file: new URL(u).pathname.split('/').slice(-4).join('/'), type,
+      minKB: '', rawKB: '', ratio: '', minIndentedPct: '', verdict: '',
+      clientlibPath: new URL(rawUrl).pathname.replace('/etc.clientlibs/', '/apps/').replace(/\.(js|css)$/i, ''),
+      url: u
     };
-    const [raw, min] = await Promise.all([get(urlFor(lib, ext)), get(urlFor(lib, '.min' + ext))]);
-    if (!raw || !raw.trim()) { row.verdict = 'NONE'; return row; }
-    const rb = new Blob([raw]).size;
-    row.rawKB = (rb / 1024).toFixed(1);
-    if (!min) { row.verdict = 'MIN FETCH FAILED'; return row; }
+    const [min, raw] = await Promise.all([get(u), rawUrl === u ? null : get(rawUrl)]);
+    if (!min) { row.verdict = 'FETCH FAILED'; return row; }
     const mb = new Blob([min]).size;
-    const ratio = mb / rb;
     const ind = indentPct(min);
     row.minKB = (mb / 1024).toFixed(1);
-    row.ratio = ratio.toFixed(2);
     row.minIndentedPct = ind;
-    if (rb < 1024) row.verdict = 'TINY';
-    else if (ratio > 0.9 && ind > 10) row.verdict = 'FAILING (unminified)';
+    if (mb < 1024) { row.verdict = 'TINY'; return row; }
+    if (!raw) {
+      // raw twin blocked by dispatcher: fall back to indentation heuristic
+      row.verdict = ind > 10 ? 'FAILING (heuristic)' : 'OK (heuristic)';
+      return row;
+    }
+    const rb = new Blob([raw]).size;
+    const ratio = mb / rb;
+    row.rawKB = (rb / 1024).toFixed(1);
+    row.ratio = ratio.toFixed(2);
+    if (ratio > 0.9 && ind > 10) row.verdict = 'FAILING (unminified)';
     else if (ratio > 0.9) row.verdict = 'NO GAIN (pre-minified?)';
     else if (ind > 10) row.verdict = 'PARTIAL';
     else row.verdict = 'OK';
     return row;
   }
 
-  const jobs = libs.flatMap(l => [[l, 'JS'], [l, 'CSS']]);
   const rows = [];
-  for (let i = 0; i < jobs.length; i += CFG.CONCURRENCY) {
-    rows.push(...await Promise.all(jobs.slice(i, i + CFG.CONCURRENCY).map(([l, t]) => check(l, t))));
-    if (rows.length % 60 < CFG.CONCURRENCY) console.log(`Checked ${rows.length}/${jobs.length}`);
+  for (let i = 0; i < targets.length; i += CONCURRENCY) {
+    rows.push(...await Promise.all(targets.slice(i, i + CONCURRENCY).map(check)));
   }
 
-  // 3. Report
-  const order = { 'FAILING (unminified)': 0, 'PARTIAL': 1, 'MIN FETCH FAILED': 2, 'NO GAIN (pre-minified?)': 3, 'OK': 4, 'TINY': 5, 'NONE': 6 };
-  rows.sort((a, b) => a.type.localeCompare(b.type) * -1 || (order[a.verdict] ?? 9) - (order[b.verdict] ?? 9) || (b.rawKB - a.rawKB));
-  const withJs = rows.filter(r => r.verdict !== 'NONE');
-  const count = (v, t) => withJs.filter(r => r.verdict === v && r.type === t).length;
-  const line = t => `${t}: ${withJs.filter(r => r.type === t).length} | FAILING: ${count('FAILING (unminified)', t)} | PARTIAL: ${count('PARTIAL', t)} | NO GAIN: ${count('NO GAIN (pre-minified?)', t)} | OK: ${count('OK', t)}`;
-  console.log(
-    `%c${line('JS')}\n${line('CSS')}`,
-    'font-weight:bold;font-size:13px'
-  );
-  console.table(withJs);
+  const order = { 'FAILING (unminified)': 0, 'FAILING (heuristic)': 1, 'PARTIAL': 2, 'FETCH FAILED': 3, 'NO GAIN (pre-minified?)': 4, 'OK': 5, 'OK (heuristic)': 6, 'TINY': 7 };
+  rows.sort((a, b) => (order[a.verdict] ?? 9) - (order[b.verdict] ?? 9) || (b.minKB - a.minKB));
+  const count = v => rows.filter(r => r.verdict.startsWith(v)).length;
+  console.log(`%cFAILING: ${count('FAILING')} | PARTIAL: ${count('PARTIAL')} | NO GAIN: ${count('NO GAIN')} | OK: ${count('OK')}`, 'font-weight:bold;font-size:13px');
+  console.table(rows.map(({ url, ...r }) => r));
 
-  const cols = Object.keys(rows[0] || {});
-  const csv = [cols.join(','), ...withJs.map(r => cols.map(c => `"${String(r[c]).replace(/"/g, '""')}"`).join(','))].join('\n');
+  if (!rows.length) return;
+  const cols = Object.keys(rows[0]);
+  const csv = [cols.join(','), ...rows.map(r => cols.map(c => `"${String(r[c]).replace(/"/g, '""')}"`).join(','))].join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-  a.download = 'clientlib-minification-status.csv';
+  a.download = `clientlib-status-${location.pathname.split('/').pop().replace('.html', '')}.csv`;
   document.body.appendChild(a); a.click(); a.remove();
-  console.log('Downloaded clientlib-minification-status.csv');
 })();
