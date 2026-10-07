@@ -1,22 +1,29 @@
-function checkIfPromoExists(promoId, promoName) {
-  return dataLayer.some(function (entry) {
-    return !!entry && entry.event === 'view_promotion' && !!entry.ecommerce &&
-      entry.ecommerce.promotion_id === promoId &&
-      entry.ecommerce.promotion_name === promoName;
-  });
+label.checkbox-inline[for="noCompanyName"] {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transform: none;
+  pointer-events: auto;
 }
-
-
-if(!checkIfPromoExists(id, $(element).data('name'))){
-
-
-$(cardContainerId).on("beforeChange", function(event, slick, currentSlide, nextSlide){
-  var rect = this.getBoundingClientRect();
-  if(currentSlide !== nextSlide && rect.bottom > 0 && rect.top < $(window).height()){
-    promoViewTracker(slick.$slides[nextSlide]);
-  }
-});
-
-promoViewTracker($(cardContainerId).find(cardId + ".slick-current")[0] || $(cardContainerId).find(cardId)[0]);
-
-dataLayer.filter(e => /_promotion/.test(e.event)).map(e => [e.event, e.ecommerce.promotion_name, e.ecommerce.items[0].index])
+label.checkbox-inline[for="noCompanyName"] input {
+  position: static;
+  flex: none;
+  width: auto;
+  height: auto;
+  margin: 0;
+}
+#companyName ~ label[id^="error-msg-companyName"] {
+  position: static;
+}
+#companyName:disabled,
+#companyName[readonly] {
+  background: #f2f2f2;
+  color: #8c8c8c;
+  cursor: not-allowed;
+}
+#companyName:disabled + label,
+#companyName[readonly] + label {
+  color: #8c8c8c;
+}
