@@ -1,251 +1,485 @@
-<body>
-  <header></header>
-  <main>
-    <div>
-      <p><a href="https://www.cat.com/en_US.html">Cat</a></p>
-    </div>
-    <div>
-      <ul>
-        <li>Products
-          <ul>
-            <li>Equipment
-              <ul>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment.html">All Equipment</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/articulated-trucks.html">Articulated Trucks</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/asphalt-pavers.html">Asphalt Pavers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/backhoe-loaders.html">Backhoe Loaders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/cold-planers.html">Cold Planers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/compactors.html">Compactors</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/dozers.html">Dozers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/draglines.html">Draglines</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/drills.html">Drills</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/electric-rope-shovels.html">Electric Rope Shovels</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/excavators.html">Excavators</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/forest-machines.html">Forest Machines</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/hydraulic-mining-shovels.html">Hydraulic Mining Shovels</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/industrial-loaders.html">Industrial Loaders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/material-handlers.html">Material Handlers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/motor-graders.html">Motor Graders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/off-highway-trucks.html">Off-Highway Trucks</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/pipelayers.html">Pipelayers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/road-reclaimers.html">Road Reclaimers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/skid-steer-and-compact-track-loaders.html">Skid Steer and Compact Track Loaders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/telehandlers.html">Telehandlers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/track-loaders.html">Track Loaders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/underground-hard-rock.html">Underground - Hard Rock</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/wheel-loaders.html">Wheel Loaders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/equipment/wheel-tractor-scrapers.html">Wheel Tractor-Scrapers</a></li>
-                <li><em><a href="https://catused.com/">Used Equipment</a></em></li>
-                <li><em><a href="https://rent.cat.com/en_US">Rental Equipment</a></em></li>
-                <li><em><a href="https://www.cat.com/en_US/products/new/technology.html">Technology</a></em></li>
-              </ul>
-            </li>
-            <li>Power Systems
-              <ul>
-                <li><a href="https://www.cat.com/en_US/products/new/power-systems.html">All Power Systems</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/power-systems/electric-power.html">Electric Power</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/power-systems/industrial.html">Industrial</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/power-systems/marine-power-systems.html">Marine Power Systems</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/power-systems/oil-and-gas.html">Oil and Gas</a></li>
-                <li><em><a href="https://catused.com/">Used Equipment</a></em></li>
-                <li><em><a href="https://rent.cat.com/en_US">Rental Equipment</a></em></li>
-              </ul>
-            </li>
-            <li>Attachments
-              <ul>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments.html">All Attachments</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/adapters.html">Adapters</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/augers.html">Augers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/backhoes.html">Backhoes</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/bale-grabs.html">Bale Grabs</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/bale-spears.html">Bale Spears</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/blades.html">Blades</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/bodies-trucks.html">Bodies - Trucks</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/bodies-underground-trucks.html">Bodies - Underground Trucks</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/brooms.html">Brooms</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/brushcutters.html">Brushcutters</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-backhoe-front.html">Buckets - Backhoe Front</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-backhoe-rear.html">Buckets - Backhoe Rear</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-compact-wheel-loader.html">Buckets - Compact Wheel Loader</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-excavator.html">Buckets - Excavator</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-loader.html">Buckets - Loader</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-mining-shovels.html">Buckets - Mining Shovels</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-skid-steer-loader.html">Buckets - Skid Steer Loader</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-telehandler.html">Buckets - Telehandler</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/buckets-underground-loaders.html">Buckets - Underground Loaders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/cold-planers.html">Cold Planers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/compactors.html">Compactors</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/couplers-backhoe-rear.html">Couplers - Backhoe Rear</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/couplers-excavator.html">Couplers - Excavator</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/couplers-loader.html">Couplers - Loader</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/electric-power-genset-enclosures.html">Electric Power: Genset Enclosures</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/electric-power-genset-fuel-tanks.html">Electric Power: Genset Fuel Tanks</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/flail-mowers.html">Flail Mowers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/forks.html">Forks</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/grading-beams.html">Grading Beams</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/grapples.html">Grapples</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/hammers.html">Hammers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/high-performance-circle-motor-graders.html">High Performance Circle - Motor Graders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/lift-groups-motor-graders.html">Lift Groups - Motor Graders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/material-handling.html">Material Handling</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/mulchers.html">Mulchers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/multi-processors.html">Multi-Processors</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/nursery-products.html">Nursery Products</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/pulverizers.html">Pulverizers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/rakes.html">Rakes</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/rippers-scarifiers.html">Rippers/Scarifiers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/rotary-cutters.html">Rotary Cutters</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/rotors.html">Rotors</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/saws.html">Saws</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/shears.html">Shears</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/snow-products.html">Snow Products</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/snow-wings-motor-graders.html">Snow Wings - Motor Graders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/stump-grinders.html">Stump Grinders</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/technology-kits.html">Technology Kits</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/thumbs.html">Thumbs</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/tillers.html">Tillers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/tilt-rotate-systems.html">Tilt Rotate Systems</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/trenchers.html">Trenchers</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/water-delivery-system.html">Water Delivery System</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/attachments/winches.html">Winches</a></li>
-                <li><em><a href="https://catused.com/">Used Attachments</a></em></li>
-                <li><em><a href="https://rent.cat.com/en_US">Rental Attachments</a></em></li>
-                <li><em><a href="https://www.cat.com/en_US/products/new/attachments/right-rail/attachments-finder.html">Attachments Finder</a></em></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-        <li>Industries
-          <ul>
-            <li><a href="https://www.cat.com/en_US/by-industry.html">All Industries</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/agriculture.html">Agriculture</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/governmental-defense.html">Caterpillar Defense</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/governmental-local-state.html">Caterpillar Governmental</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/construction.html">Construction</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/demolition.html">Demolition</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/electric-power.html">Electric Power</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/forestry.html">Forestry</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/industrial-power.html">Industrial Power</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/landscaping.html">Landscaping</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/marine.html">Marine</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/mining.html">Mining</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/oil-and-gas.html">Oil &amp; Gas</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/paving.html">Paving</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/quarry-aggregates.html">Quarry &amp; Aggregates</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/scrap-recycling.html">Scrap Recycling</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/snow-and-ice.html">Snow Removal</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/waste.html">Waste Management</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/oem-solutions.html">OEM Solutions</a></li>
-          </ul>
-        </li>
-        <li>Finance
-          <ul>
-            <li><a href="https://www.cat.com/en_US/support/financing-protection.html">All Finance</a></li>
-            <li><a href="https://www.cat.com/en_US/support/financing-protection/financing-options/cat-commercial-account.html">Cat Commercial Account</a></li>
-            <li><a href="https://www.cat.com/en_US/support/cat-rewards.html">Cat Rewards</a></li>
-            <li><a href="https://www.cat.com/en_US/support/financing-protection/protection-solutions/customer-value-agreement.html">Customer Value Agreements</a></li>
-            <li><a href="https://www.cat.com/en_US/support/financing-protection/financing-options.html">Leases &amp; Loans</a></li>
-            <li><a href="https://www.cat.com/en_US/support/financing-protection/offers.html">Limited-Time Offers</a></li>
-            <li><a href="https://www.cat.com/en_US/support/financing-protection/protection-solutions.html">Protection &amp; Insurance</a></li>
-            <li><a href="https://www.cat.com/en_US/support/financing-protection/resources/tools-calculators.html">Tools &amp; Calculators</a></li>
-            <li><em><a href="https://mycatfinancial.com/s/">View MyCatFinancial Account</a></em></li>
-            <li><em><a href="https://mycatfinancial.com/s/">Make a Payment</a></em></li>
-            <li><em><a href="https://www.cat.com/en_US/exclusive/cat-rewards.html?hideRegConf">View my Cat Rewards</a></em></li>
-          </ul>
-        </li>
-        <li>Support
-          <ul>
-            <li>Maintenance
-              <ul>
-                <li><a href="https://www.cat.com/en_US/support/maintenance.html">All Maintenance</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/certified-rebuild.html">Cat Rebuilds</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/parts/reman.html">Cat Reman</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/retrofits.html">Cat Retrofits</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/customer-value-agreements.html">Customer Value Agreements</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/sos-services.html">Fluid Analysis</a></li>
-                <li><a href="https://www.cat.com/en_US/products/new/parts.html">Parts &amp; Accessories</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/parts-reference-guides.html">Parts Reference Guides</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/self-service-options.html">Self-Service Options</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/service-manuals.html">Service Manuals</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/warranty.html">Warranty Information</a></li>
-                <li><em><a href="https://parts.cat.com/en/catcorp">Buy Parts</a></em></li>
-                <li><em><a href="https://parts.cat.com/en/catcorp/catcentral">Cat Central App</a></em></li>
-                <li><em><a href="https://www.cat.com/en_US/support/maintenance/sis2go-app.html">Cat SIS2GO App</a></em></li>
-              </ul>
-            </li>
-            <li>Technology Kits &amp; Software
-              <ul>
-                <li><a href="https://www.cat.com/en_US/support/technology.html">All Technology Kits &amp; Software</a></li>
-                <li><a href="https://www.cat.com/en_US/by-industry/construction/technology.html">Construction Technology</a></li>
-                <li><a href="https://www.cat.com/content/catdotcom/en_US/by-industry/electric-power/product-support/cat-connect">Electric Power Technology</a></li>
-                <li><a href="https://www.cat.com/en_US/by-industry/industrial-power/connectivity.html">Industrial Technology</a></li>
-                <li><a href="https://www.cat.com/en_US/by-industry/marine/marine-digital-services.html">Marine Technology</a></li>
-                <li><a href="https://www.cat.com/en_US/by-industry/mining/minestar-solutions.html">Mining Technology</a></li>
-                <li><a href="https://www.cat.com/en_US/by-industry/oil-and-gas/product-support/cat-oil-gas-digital-services.html">Oil &amp; Gas Technology</a></li>
-                <li><em><a href="https://www.cat.com/en_US/by-industry/mining/minestar-solutions.html">MineStar Fleet</a></em></li>
-                <li><em><a href="https://www.cat.com/en_US/support/maintenance/visionlink.html">VisionLink</a></em></li>
-                <li><em><a href="https://www.cat.com/en_US/support/technology/equipment-management/cat-inspect.html">Cat Inspect</a></em></li>
-              </ul>
-            </li>
-            <li>Training
-              <ul>
-                <li><a href="https://www.cat.com/en_US/support/cat-training.html">All Training</a></li>
-                <li><a href="https://www.cat.com/en_US/support/cat-training/operator-training.html">Operator Training</a></li>
-                <li><a href="https://www.cat.com/en_US/support/cat-training/learning.html">Service Technician Training</a></li>
-                <li><a href="https://www.cat.com/en_US/support/cat-training.html">Training by Industry</a></li>
-              </ul>
-            </li>
-            <li>Job Site Consultation
-              <ul>
-                <li><a href="https://www.cat.com/en_US/support/operations/consulting-expert-solutions.html">All Job Site Consultation</a></li>
-                <li><a href="https://www.cat.com/en_US/support/operations/jobsite-solutions.html">Cat Job Site Solutions</a></li>
-                <li><a href="https://www.cat.com/en_US/support/maintenance/fleet-management/condition-monitoring.html">Condition Monitoring</a></li>
-                <li><a href="https://www.cat.com/en_US/support/operations/jobsite-solutions/fleet-management-works.html">How Fleet Management Works</a></li>
-                <li><a href="https://www.cat.com/en_US/support/safetyservices/css-resources.html">Safety Resources</a></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-        <li>Company
-          <ul>
-            <li><a href="https://www.cat.com/en_US/company.html">All Company</a></li>
-            <li><a href="https://www.cat.com/en_US/support/contact-us.html">Contact Us</a></li>
-            <li><a href="https://www.cat.com/en_US/support/sustainability.html">Sustainability</a></li>
-            <li><a href="https://www.cat.com/en_US/news/press-releases.html">Trade Press Releases</a></li>
-            <li><em><a href="https://www.caterpillar.com/en/careers.html">Careers</a></em></li>
-            <li><em><a href="https://shopcaterpillar.com/">Shop Merchandise</a></em></li>
-            <li><em><a href="https://www.catfootwear.com/US/en/home">Shop Footwear</a></em></li>
-          </ul>
-        </li>
-        <li><a href="https://parts.cat.com/en/catcorp">Buy Parts</a></li>
-      </ul>
-    </div>
-    <div>
-      <ul>
-        <li><a href="https://www.cat.com/en_US/support/dealer-locator.html">Find Dealer</a></li>
-        <li>Account
-          <ul>
-            <li><a href="https://www.cat.com/en_US/account/login.html">Sign In</a></li>
-            <li><a href="https://www.cat.com/en_US/account/register.html">Create Account</a></li>
-            <li><em><a href="https://vl.cat.com/visionlink?ui_locales=en-US">My Fleet | VisionLink</a></em></li>
-            <li><em><a href="https://mycatfinancial.com/GC_Login">MyCatFinancial</a></em></li>
-          </ul>
-        </li>
-        <li>Cat Applications
-          <ul>
-            <li><a href="https://www.cat.com/en_US.html">Explore Products</a></li>
-            <li><a href="https://parts.cat.com/en/catcorp">Buy Parts</a></li>
-            <li><a href="https://www.cat.com/en_US/by-industry/construction-industry-resources/shop-cat-equipment.html">Shop Machines</a></li>
-            <li><a href="https://shopcaterpillar.com">Buy Merchandise</a></li>
-            <li><a href="https://catused.cat.com/en/">Find Used Products</a></li>
-            <li><a href="https://rent.cat.com">Rent Products</a></li>
-            <li><a href="https://vl.cat.com/visionlink?ui_locales=en-US">Manage My Equipment</a></li>
-            <li><a href="https://www.cat.com/en_US/support/financing-protection.html">View Finance Solutions</a></li>
-          </ul>
-        </li>
-        <li><a href="https://www.cat.com/en_US/language-selector.html">North America - English</a></li>
-      </ul>
-    </div>
-  </main>
-  <footer></footer>
-</body>
+/* mobile-first file: the desktop media query restyles the same elements with shorter selectors */
+/* stylelint-disable no-descending-specificity */
+
+/* header theme: change the colors and row heights here */
+header {
+  --header-accent: #ffcd11;
+  --header-background: #fff;
+  --header-text: #000;
+  --header-muted: #f2f2f2;
+  --header-border: #d9d9d9;
+  --header-nav-row-height: 48px;
+}
+
+/* header and nav layout */
+header .nav-wrapper {
+  position: fixed;
+  z-index: 2;
+  width: 100%;
+  border-bottom: 1px solid var(--header-border);
+  background-color: var(--header-background);
+  color: var(--header-text);
+}
+
+header nav {
+  box-sizing: border-box;
+  display: grid;
+  grid-template:
+    'hamburger brand' var(--nav-height)
+    'sections sections' auto
+    'tools tools' auto / auto 1fr;
+  align-items: center;
+  gap: 0 24px;
+  margin: auto;
+  max-width: 1248px;
+  height: var(--nav-height);
+  padding: 0 24px;
+  font-family: var(--body-font-family);
+  font-size: var(--body-font-size-s);
+  line-height: 1.3;
+}
+
+header nav[aria-expanded='true'] {
+  align-content: start;
+  overflow-y: auto;
+  height: 100dvh;
+}
+
+header nav p {
+  margin: 0;
+  line-height: 1;
+}
+
+header nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+header nav a:any-link {
+  color: currentcolor;
+  text-decoration: none;
+}
+
+header nav a:hover {
+  text-decoration: underline;
+}
+
+header nav a:focus-visible,
+header nav button:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: 2px;
+}
+
+/* hamburger */
+header nav .nav-hamburger {
+  grid-area: hamburger;
+  height: 22px;
+  display: flex;
+  align-items: center;
+}
+
+header nav .nav-hamburger button {
+  height: 22px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background-color: var(--header-background);
+  color: inherit;
+  overflow: initial;
+  text-overflow: initial;
+  white-space: initial;
+}
+
+header nav .nav-hamburger-icon,
+header nav .nav-hamburger-icon::before,
+header nav .nav-hamburger-icon::after {
+  box-sizing: border-box;
+  display: block;
+  position: relative;
+  width: 20px;
+}
+
+header nav .nav-hamburger-icon::before,
+header nav .nav-hamburger-icon::after {
+  content: '';
+  position: absolute;
+  background: currentcolor;
+}
+
+header nav[aria-expanded='false'] .nav-hamburger-icon,
+header nav[aria-expanded='false'] .nav-hamburger-icon::before,
+header nav[aria-expanded='false'] .nav-hamburger-icon::after {
+  height: 2px;
+  border-radius: 2px;
+  background: currentcolor;
+}
+
+header nav[aria-expanded='false'] .nav-hamburger-icon::before {
+  top: -6px;
+}
+
+header nav[aria-expanded='false'] .nav-hamburger-icon::after {
+  top: 6px;
+}
+
+header nav[aria-expanded='true'] .nav-hamburger-icon {
+  height: 22px;
+}
+
+header nav[aria-expanded='true'] .nav-hamburger-icon::before,
+header nav[aria-expanded='true'] .nav-hamburger-icon::after {
+  top: 3px;
+  left: 1px;
+  transform: rotate(45deg);
+  transform-origin: 2px 1px;
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+}
+
+header nav[aria-expanded='true'] .nav-hamburger-icon::after {
+  top: unset;
+  bottom: 3px;
+  transform: rotate(-45deg);
+}
+
+/* brand */
+header nav .nav-brand {
+  grid-area: brand;
+  font-size: var(--heading-font-size-s);
+  font-weight: 700;
+  line-height: 1;
+}
+
+header nav .nav-brand img {
+  display: block;
+  width: auto;
+  height: 32px;
+}
+
+/* sections and tools: hidden on mobile until the hamburger opens the nav */
+header nav .nav-sections,
+header nav .nav-tools {
+  display: none;
+}
+
+header nav .nav-sections {
+  grid-area: sections;
+}
+
+header nav .nav-tools {
+  grid-area: tools;
+  padding-bottom: 24px;
+}
+
+header nav[aria-expanded='true'] .nav-sections,
+header nav[aria-expanded='true'] .nav-tools {
+  display: block;
+}
+
+/* mobile menu: one full-width row per item */
+header nav li {
+  border-bottom: 1px solid var(--header-border);
+}
+
+header nav .nav-menu > li {
+  font-weight: 700;
+}
+
+header nav li > a,
+header nav .nav-drop > button,
+header nav .nav-group > button,
+header nav .nav-back {
+  all: unset;
+  box-sizing: border-box;
+  display: block;
+  position: relative;
+  width: 100%;
+  padding: 14px 28px 14px 0;
+  cursor: pointer;
+}
+
+/* chevron pointing to the next level */
+header nav .nav-drop > button::after,
+header nav .nav-group > button::after,
+header nav .nav-back::before {
+  content: '';
+  position: absolute;
+  top: calc(50% - 4px);
+  right: 6px;
+  transform: rotate(45deg);
+  width: 6px;
+  height: 6px;
+  border: solid currentcolor;
+  border-width: 2px 2px 0 0;
+}
+
+/* mobile panels: each level slides over the previous one */
+header nav .nav-panel,
+header nav .nav-mega .nav-content {
+  box-sizing: border-box;
+  display: none;
+  position: fixed;
+  inset: var(--nav-height) 0 0;
+  z-index: 1;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+  background-color: var(--header-background);
+  font-weight: 400;
+}
+
+header nav .nav-drop > button[aria-expanded='true'] + .nav-panel,
+header nav .nav-group > button[aria-expanded='true'] + .nav-content {
+  display: block;
+}
+
+header nav .nav-back {
+  border-bottom: 4px solid var(--header-accent);
+  padding: 14px 0 14px 28px;
+  font-weight: 700;
+}
+
+header nav .nav-back::before {
+  right: auto;
+  left: 6px;
+  transform: rotate(225deg);
+}
+
+header nav .nav-group {
+  font-weight: 700;
+}
+
+header nav .nav-rail {
+  margin-top: 24px;
+  padding: 0 16px;
+  background-color: var(--header-muted);
+  font-weight: 700;
+}
+
+header nav .nav-rail > li:last-child {
+  border-bottom: 0;
+}
+
+@media (width >= 900px) {
+  /* two rows: brand and tools, then the main navigation */
+  header {
+    height: auto;
+    min-height: calc(var(--nav-height) + var(--header-nav-row-height));
+  }
+
+  header .nav-wrapper {
+    position: relative;
+  }
+
+  header nav {
+    grid-template:
+      'brand tools' var(--nav-height)
+      'sections sections' var(--header-nav-row-height) / auto 1fr;
+    align-items: stretch;
+    max-width: 1264px;
+    height: auto;
+    padding: 0 32px;
+  }
+
+  header nav .nav-hamburger,
+  header nav .nav-back {
+    display: none;
+  }
+
+  header nav .nav-brand {
+    align-self: center;
+  }
+
+  header nav .nav-sections,
+  header nav .nav-tools {
+    display: block;
+    padding: 0;
+  }
+
+  header nav .nav-tools {
+    justify-self: end;
+    font-size: var(--body-font-size-xs);
+  }
+
+  header nav .nav-sections > div,
+  header nav .nav-tools > div {
+    height: 100%;
+  }
+
+  header nav .nav-menu {
+    display: flex;
+    gap: 32px;
+    height: 100%;
+  }
+
+  header nav .nav-tools .nav-menu {
+    gap: 24px;
+  }
+
+  header nav li {
+    border-bottom: 0;
+  }
+
+  header nav .nav-menu > li {
+    display: flex;
+    align-items: stretch;
+    white-space: nowrap;
+  }
+
+  /* the first plain link after the menus (Buy Parts) sits on the right */
+  header nav .nav-sections .nav-drop + li:not(.nav-drop) {
+    margin-left: auto;
+  }
+
+  header nav .nav-tools .nav-menu > li {
+    position: relative;
+    font-weight: 400;
+  }
+
+  header nav li > a {
+    width: auto;
+    padding: 6px 0;
+  }
+
+  header nav .nav-menu > li > a,
+  header nav .nav-drop > button {
+    display: flex;
+    align-items: center;
+    width: auto;
+    padding: 0;
+  }
+
+  /* accent bar under the hovered and the open item */
+  header nav .nav-sections .nav-menu > li > a:hover,
+  header nav .nav-sections .nav-drop > button:hover,
+  header nav .nav-sections .nav-drop > button[aria-expanded='true'] {
+    box-shadow: inset 0 -4px 0 var(--header-accent);
+    text-decoration: none;
+  }
+
+  header nav .nav-tools .nav-drop > button:hover,
+  header nav .nav-tools .nav-drop > button[aria-expanded='true'] {
+    text-decoration: underline;
+  }
+
+  header nav .nav-drop > button::after {
+    position: static;
+    transform: translateY(-2px) rotate(135deg);
+    margin-left: 8px;
+    width: 5px;
+    height: 5px;
+  }
+
+  header nav .nav-drop > button[aria-expanded='true']::after {
+    transform: translateY(2px) rotate(315deg);
+  }
+
+  /* panel: full width below the header */
+  header nav .nav-panel {
+    position: absolute;
+    inset: 100% 0 auto;
+    max-height: calc(100dvh - var(--nav-height) - var(--header-nav-row-height) - 24px);
+    border-top: 1px solid var(--header-border);
+    padding: 32px max(32px, calc((100% - 1200px) / 2));
+    box-shadow: 0 8px 16px rgb(0 0 0 / 15%);
+    white-space: normal;
+  }
+
+  header nav .nav-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 48px;
+  }
+
+  header nav .nav-links {
+    flex: 1 1 auto;
+    columns: 4 180px;
+    column-gap: 32px;
+  }
+
+  header nav .nav-links > li {
+    break-inside: avoid;
+  }
+
+  header nav .nav-rail {
+    flex: 0 0 220px;
+    margin: 0;
+    border-left: 1px solid var(--header-border);
+    padding: 0 0 0 32px;
+    background-color: transparent;
+  }
+
+  /* mega menu: groups on the left, the links of the active group next to them */
+  header nav .nav-mega > button[aria-expanded='true'] + .nav-panel {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: repeat(var(--nav-groups), auto) 1fr;
+    column-gap: 48px;
+  }
+
+  header nav .nav-mega .nav-groups,
+  header nav .nav-mega .nav-groups > li {
+    display: contents;
+  }
+
+  header nav .nav-mega .nav-groups > li > a,
+  header nav .nav-mega .nav-group > button {
+    grid-column: 1;
+    border-left: 4px solid transparent;
+    padding: 12px 32px 12px 16px;
+    font-weight: 700;
+  }
+
+  header nav .nav-mega .nav-group > button::after {
+    right: 16px;
+  }
+
+  header nav .nav-mega .nav-group > button[aria-expanded='true'] {
+    border-left-color: var(--header-accent);
+    background-color: var(--header-muted);
+  }
+
+  header nav .nav-mega .nav-content,
+  header nav .nav-mega .nav-group > button[aria-expanded='true'] + .nav-content {
+    position: static;
+    grid-area: 1 / 2 / -1 / 3;
+    z-index: auto;
+    overflow: visible;
+    padding: 0;
+  }
+
+  header nav .nav-mega .nav-group > button[aria-expanded='true'] + .nav-content {
+    display: flex;
+  }
+
+  header nav .nav-mega .nav-links {
+    columns: 3 180px;
+  }
+
+  /* tools menus: small panels aligned to the right */
+  header nav .nav-tools .nav-panel {
+    inset: 100% 0 auto auto;
+    width: 280px;
+    padding: 16px 24px;
+  }
+
+  header nav .nav-tools .nav-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  header nav .nav-tools .nav-links {
+    columns: auto;
+  }
+
+  header nav .nav-tools .nav-rail {
+    flex: 0 0 auto;
+    align-self: stretch;
+    border-top: 1px solid var(--header-border);
+    border-left: 0;
+    padding: 12px 0 0;
+    font-weight: 400;
+  }
+}
