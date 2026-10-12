@@ -1,199 +1,195 @@
-# Investigation: Core Web Vitals – Minification (JavaScript, CSS, HTML) & Compression
+# Cat.com Header on EDS: Implementation Analysis
 
-| | |
-|---|---|
-| **Ticket** | 2877209 – FS \| Investigation \| Core Web Vitals (JavaScript optimization) \| Minification (JavaScript, CSS and Text/Html file) |
-| **Owner** | Arkaprava Majumder |
-| **Date** | 28 Sep 2026 |
-| **Environments** | Production publish (www.cat.com), QA author (authorqa.aws.cat.com) |
-| **Status** | Investigation complete – JS fix identified and validated on QA author |
+Oct 13, 2026 · Arka
 
----
+## Purpose and scope
 
-## 1. Summary
+Recommendation: rebuild the cat.com global header as one EDS `header` block that reads an author-owned `nav` document in Document Authoring (da.live). Authors then change menus, links and drawers without a code deploy. This is an analysis only; no build has started.
 
-| Area | Result |
-|---|---|
-| **JavaScript** | 81 unique clientlib files are served across the site. **79 are minified correctly. 2 are served as `.min` but are not minified.** A fix was validated on QA. |
-| **CSS** | All clientlib CSS is minified correctly (YUI). One dynamic, non-clientlib CSS file (`whitelabel-v2`, ~824 KB) is not minified. |
-| **HTML minification** | Not minified today. The estimated saving is up to ~18% after gzip. A Sling filter POC is ready. |
-| **HTML compression** | **Working.** All crawled pages return `Content-Encoding: gzip`, except 8 pages that return **404**. |
+**In scope**
 
----
+- Desktop and mobile header for the North America English site, matching cat.com's layout, colours and interactions
+- Search bar, utility links, Sign In, Cat Applications, region and language picker
+- Mega menu for Products, Industries, Finance, Support and Company
+- Authoring model, icons, design tokens, accessibility and performance targets
 
-## 2. Requirements Status
+**Out of scope**
 
-| # | Requirement | Status |
-|---|---|---|
-| 1 | Identify which files are minified and which still need optimization | ✅ Done |
-| 2 | Review remaining JS and CSS files that are not minified | ✅ Done – 2 JS clientlibs, 1 dynamic CSS |
-| 3 | Minify the identified JS and CSS files | ✅ JS fix validated on QA. CSS through filter POC |
-| 4 | Verify HTML compression works as expected | ✅ Verified |
-| 5 | Confirm compressed HTML returns `Content-Encoding: gzip` | ✅ Confirmed on all valid pages |
-| 6 | Investigate missing `Content-Encoding` header | ✅ Missing only on 8 pages that return 404 |
-| 7 | Functionality unaffected after optimization | ⏳ QA regression pending |
-| 8 | Focus on JS/CSS delivered to the browser | ✅ Analysis based on served files |
-| 9 | Evaluate HTML minification | ✅ Evaluated, POC ready |
+- Search results page, sign-in and account integration, dealer locator
+- Footer, page templates, Cat AI Assistant chat
+- Region and language URLs for locales other than North America English
 
----
+## Current header on cat.com
 
-## 3. Approach
+The header is two black rows on desktop and a black top bar plus search row on mobile, with every menu opening as a white panel or side drawer. Observed on cat.com/en_US on 12 Oct 2026.
 
-### 3.1 How the file lists were produced
+| Area | Desktop | Mobile |
+| --- | --- | --- |
+| Top row | CAT logo, wide search field with a yellow search button, Find Dealer, Sign In, Cat Applications (grid icon) | Hamburger, centred logo, person icon; search field on its own row below |
+| Main navigation | Second row: Products, Industries, Finance, Support, Company; Buy Parts and region on the right | Full-screen list with chevrons, Buy Parts, a divider, then Find Dealer, region and Cat Applications |
+| Open menu item | Yellow label, chevron up, 4 px yellow bar under the item | Drill-down to the next level |
+| Menu panel | White panel below the header: tabs on the left (Equipment, Power Systems, Attachments), links in three columns, side links on the right | Same content, one level per screen |
+| Side links | Used Equipment, Rental Equipment, Technology; links to other Cat sites carry an external icon | Same |
+| Cat Applications | Drawer from the right: icon, title, description and domain per app, Close button | Full-width drawer |
+| Region and language | Drawer: region select, language options with a check on the current one, Save and Cancel | Full-width drawer |
+| Colours | Black #000, yellow #ffcd11, white panels | Same |
 
-The initial repo scan (1,164 JS / 814 CSS files without `.min` in the name) was not used as-is. Clientlib source files are expected to be unminified in the repo, because AEM concatenates and minifies them at serve time. The investigation measured **what the browser actually receives** instead.
+## Recommended approach
 
-Custom browser-console scripts were run on production (www.cat.com):
+Use the boilerplate's pattern: the `header` block loads the `nav` document as a fragment and turns its lists into the header. Content and code change independently, which is what makes it authorable.
 
-1. **Page discovery:** the scripts read the sitemap XML files listed in `robots.txt` (including sitemap indexes), then followed internal links. **1,000 pages** under `/en_US` were crawled. Other locales use the same clientlibs, so these pages cover all templates and clientlibs.
-2. **HTML:** each page was fetched to record `Content-Encoding`, the compressed and uncompressed size, and a minification estimate.
-3. **JS and CSS:** every `<script>` and `<link rel="stylesheet">` in each page's HTML was collected and de-duplicated into the list of unique clientlib files (`/etc.clientlibs/...min.<hash>.js|css`).
-4. **Minification check:** each served `.min` file was compared with its non-minified twin. A file was flagged when the `.min` output was about the same size as the raw source and still indented.
-
-### 3.2 Server-side confirmation (QA author)
-
-- HTML Library Manager configuration reviewed in `/system/console/configMgr`.
-- GCC compile errors read from `error.log` through the Sling log tailer.
-- Fixes tested in CRXDE, followed by `dumplibs.rebuild.html` → Invalidate caches.
-
----
-
-## 4. AEM Configuration (Adobe Granite HTML Library Manager)
-
-| Setting | Value |
-|---|---|
-| Minify | ✅ Enabled |
-| Gzip (js/css) | ✅ Enabled |
-| JS Processor Default Configs | `min:gcc;obfuscate=true;languageIn=ECMASCRIPT_2020;languageOut=ECMASCRIPT5` |
-| CSS Processor Default Configs | `min:yui` |
-
-Minification is enabled globally. A clientlib's own `jsProcessor`/`cssProcessor` property overrides these defaults for that clientlib only.
-
----
-
-## 5. JavaScript
-
-### 5.1 Result
-
-| Metric | Value |
-|---|---|
-| Pages crawled | 1,000 |
-| Unique `.min` clientlib files | 81 |
-| Minified correctly | 66 |
-| Tiny / already minified | 13 |
-| **Served as `.min` but NOT minified** | **2** |
-
-| Clientlib | Size | Loaded on |
-|---|---|---|
-| `/apps/deg/components/content/product/editable/detail/pim/productSpecifications/v3/productSpecifications/clientlibs/site` | 1,820 KB (identical to raw source) | 854 / 1,000 pages |
-| `/apps/catDotCom/clientlibs/clientlib-catai` | 43 KB (identical to raw source) | 991 / 1,000 pages |
-
-### 5.2 Root cause
-
-Google Closure Compiler (GCC) processes each source file separately. When a file fails to compile under the global config (`obfuscate=true`, ES5 output), **AEM silently serves that file unminified** inside the `.min` bundle, with no visible error. The `error.log` shows these failures as `GCCScriptProcessor Processed <file>.js. N error(s)`.
-
-### 5.3 Fix (validated on QA author)
-
-Add this attribute to the `.content.xml` of both clientlib folders, keeping all existing properties:
-
-```xml
-jsProcessor="[default:none,min:gcc;compilationLevel=whitespace;languageIn=ECMASCRIPT_2020;languageOut=ECMASCRIPT_2020]"
+```mermaid
+flowchart LR
+  subgraph Content["Content, owned by authors"]
+    A["Author edits<br/>nav doc in da.live"] --> B["Preview, publish<br/>from the da.live editor"] --> C["nav.plain.html<br/>on aem.page / aem.live"]
+  end
+  subgraph Code["Code, owned by developers"]
+    D["Developer pushes<br/>header.js, header.css, /icons"] --> E["AEM Code Sync<br/>deploys on push"] --> F["Block code live<br/>same branch URLs"]
+  end
+  C --> G["Visitor's browser<br/>header block loads nav,<br/>builds menus, panels and drawers"]
+  F --> G
 ```
 
-- `.../productSpecifications/v3/productSpecifications/clientlibs/site/.content.xml`
-- `.../apps/catDotCom/clientlibs/clientlib-catai/.content.xml`
+Why this over the alternatives:
 
-Whitespace compilation removes comments and whitespace without rewriting code. It minified productSpecifications successfully on QA.
+- **Hard-coded header in JavaScript**: every link change needs a developer and a deploy.
+- **One custom block per menu**: authors would edit block tables, which is harder than nested lists and splits the header across documents.
+- **Universal Editor with component models**: possible later, but needs AEM authoring setup; Document Authoring is enough for a list-shaped header.
 
-A global change to the same setting was evaluated and **not recommended**. It would make the 66 working clientlibs slightly larger (no variable renaming) and drop ES5 output site-wide, to fix only 2 files.
+Files involved: `blocks/header/header.js`, `blocks/header/header.css`, SVGs in `/icons`, one height rule in `styles/styles.css`, and the `nav` document in da.live.
 
----
+## Authoring model
 
-## 6. CSS
+Authors maintain one `nav` document in da.live with five sections, separated by section breaks, in a fixed order. The header code reads sections by position, so authors must not reorder or delete them.
 
-- **Clientlib CSS:** all files are minified by YUI, with 0 failures. YUI keeps one line break per rule, unlike Bootstrap's single-line output. The difference after gzip is ~0%, and matching Bootstrap would need a build pipeline the project does not have (no `ui.frontend`, CSS is component-scoped in `ui.apps`). **No change needed.**
-- **Dynamic CSS:** `whitelabel-v2.css` (~824 KB) is generated by a Sling Model through HTL. It is not a clientlib, so it is never minified. It is covered by the filter POC (Section 7).
-- **Oversized CSS:** `clientlib-base.min.css` (~743 KB) is minified but large, which points to unused CSS. Follow-up recommended.
+| # | Section | What authors put in it |
+| --- | --- | --- |
+| 1 | Brand | Logo image, then a link to the home page |
+| 2 | Search | One link to the search results page, for example `/search?q=` (the parameter name is taken from the link) |
+| 3 | Tools | Find Dealer link; Sign In and Cat Applications as labels with a nested list, which open drawers |
+| 4 | Main navigation | Products, Industries, Finance, Support, Company as labels with nested lists; Buy Parts as a plain link |
+| 5 | Region | One label (North America-English) with nested regions, each holding its language links |
 
----
+Formatting carries behaviour, so authors need no tables or block names:
 
-## 7. HTML Minification
+| Authoring | Result |
+| --- | --- |
+| Nested list under a menu label | Opens a menu panel |
+| Third list level (Equipment, Power Systems) | Becomes a tab inside the panel |
+| *Italic* link in a menu | Moves to the side-links column |
+| `:pin:`, `:globe:`, `:apps:` | Icon from the `/icons` folder in code |
+| **Bold** tools label | Stays in the mobile top bar as an icon (Sign In) |
+| *Italic* tools label | Shows only its icon on desktop (Cat Applications) |
+| **Bold** link inside a drawer | Button (first one yellow) |
+| Link, line break, text inside a drawer | Card with title, description and domain |
+| Link to a host other than the home page | External icon, opens in a new window |
 
-| Sample page | Before | After (estimated) |
-|---|---|---|
-| Raw HTML | 453.6 KB | 325.8 KB |
-| Gzipped | 62.1 KB | 50.9 KB |
-| **Saving after gzip** | | **~18% (upper bound)** |
+A page can point to a different nav document through `nav` page metadata, which allows locale-specific navigation later.
 
-**Proposed solution:** a Sling filter on publish (POC ready). It:
-- Removes HTML comments and collapses indentation.
-- Skips `<pre>`, `<script>`, `<style>` and `<textarea>` content, and never runs in author edit mode.
-- Also minifies the dynamic whitelabel CSS.
-- Is toggled through OSGi config, with a `?nominify=true` bypass for comparison.
+## Component behaviour
 
-Dispatcher caches the output, so the CPU cost is paid once per cache fill. Needs backend and architect review.
+The breakpoint is 900 px, the boilerplate default; below it the mobile layout applies.
 
----
+**Desktop (900 px and wider)**
 
-## 8. HTML Compression
+- Menu items open on click; one panel is open at a time.
+- Inside a tabbed panel, the first tab is active on open; hovering, focusing or clicking another tab switches it.
+- A click outside the header, tabbing out of it, or Escape closes the panel. Escape returns focus to the menu item.
+- Tools labels open drawers; links go straight to their page.
 
-| Result | Pages |
-|---|---|
-| `Content-Encoding: gzip` present | All valid pages |
-| No `Content-Encoding` | **8 – all return HTTP 404** |
+**Mobile (below 900 px)**
 
-- Compression works correctly at the dispatcher/CDN level. The earlier observation that the header was missing was most likely made on a request sent without `Accept-Encoding`, or on a cached or intermediate response.
-- The 8 URLs without compression are error pages (404). They are small and have negligible performance impact. They are, however, **broken links discovered through the sitemap or internal navigation**, and should be reviewed separately.
-- Compression reduces the sample page from 453.6 KB to 62.1 KB (~86%).
+- The hamburger opens a full-screen menu and locks page scrolling; the search row hides.
+- Each level slides over the previous one with a back row at the top (Products, then Equipment, then its links).
+- Escape goes back one level, then closes the menu.
+- Sign In stays in the top bar as an icon.
 
----
+**Drawers (both)**
 
-## 9. Conclusion
+- Built on the native `dialog` element: it traps focus, Escape closes it, and focus returns to the opener.
+- A click on the dimmed backdrop closes it.
+- The region picker shows the languages of the selected region; Save goes to the chosen language's URL, Cancel closes.
+- 480 px wide on desktop, full width on mobile; slides in from the right unless the user prefers reduced motion.
 
-- Site-wide minification is largely in place. **Only 2 JS clientlibs are unminified**, caused by silent GCC compile failures. A targeted, low-risk fix was identified and validated on QA author.
-- Clientlib CSS minification works correctly. The only unminified CSS is dynamic (whitelabel).
-- **HTML compression (gzip) works on all valid pages.** Missing headers were found only on 404 responses.
-- HTML minification offers a moderate additional gain (~18% after gzip) and needs a backend filter. A POC is ready.
-- The largest remaining performance opportunity is outside minification: productSpecifications ships **~1.8 MB of JS on ~85% of pages**, mostly html2pdf/jsPDF code that is only needed for PDF download.
+## Styling
 
----
+All header colours and sizes live as CSS custom properties at the top of `header.css`, scoped to `header`, so a theme change is one edit. Sizes are estimated from screenshots, not measured from cat.com's stylesheet.
 
-## 10. Next Steps
+| Token | Value | Used for |
+| --- | --- | --- |
+| `--header-black` | #000 | Header rows, text on white |
+| `--header-yellow` | #ffcd11 | Search button, open item, active tab, primary buttons |
+| `--header-white` | #fff | Panels, drawers, search field |
+| `--header-line` | #d9d9d9 | Dividers on white |
+| `--header-line-dark` | #333 | Line between the two desktop rows |
+| `--header-link` | #0067b8 | Domains and text links in drawers (assumed) |
+| `--header-bar-height` | 64 px mobile, 88 px desktop | Top row |
+| `--header-nav-height` | 44 px | Desktop main navigation row |
+| `--header-search-height` | 44 px | Search field and button |
 
-| # | Action | Owner / Type |
-|---|---|---|
-| 1 | **Push the JS change:** add `jsProcessor` to productSpecifications v3 and clientlib-catai `.content.xml`, then raise a PR | Dev – this story |
-| 2 | Revert any manual QA changes (global JS processor value, CRXDE `jsProcessor`) before deployment | Dev |
-| 3 | Deploy to QA, invalidate clientlib cache (`dumplibs.rebuild.html`) | Dev / DevOps |
-| 4 | **QA regression** (checklist below) | QA |
-| 5 | Rerun the site-wide console script on QA/prod publish → expect **0 unminified files** | Dev |
-| 6 | Review the 8 URLs returning 404 (sitemap / broken links) | Content / Dev |
-| 7 | New story: lazy-load html2pdf/jsPDF in productSpecifications | Dev |
-| 8 | New story: HTML + dynamic CSS minification Sling filter (POC ready) | Backend / Architect |
-| 9 | New story: reduce whitelabel CSS size and audit unused CSS in `clientlib-base` | Dev |
+- **Fonts**: the boilerplate's self-hosted Roboto for text and Roboto Condensed for drawer titles. cat.com's body text appears to be Noto Sans; matching it means adding self-hosted Noto Sans files to `/fonts`.
+- **Icons**: SVG files in `/icons`, drawn through a CSS mask so they take the text colour (white on black, black on white). 14 icons are needed: search, pin, person, apps, globe, external, close, settings, cart, box, tag, clock, truck, dollar. Open-source sets (Material Icons, Apache 2.0; Feather, MIT) cover them; the client's own icon set should replace them if one exists.
+- **Logo**: the client's logo image, placed by authors in the brand section.
 
-### QA Regression Checklist
+## Accessibility, performance and quality gates
 
-- [ ] PDP: specification tabs, anchor links, tab keyboard navigation
-- [ ] PDP: PDF download (html2pdf)
-- [ ] Cat AI features (clientlib-catai) on all templates
-- [ ] Home, listing, article pages: no new console errors
-- [ ] Both `.min.<hash>.js` files are minified (no indentation or comments)
-- [ ] Cross-browser check (Chrome, Edge, Safari, Firefox; mobile)
+The header must not cost the page its Lighthouse 100, and must be usable by keyboard and screen reader alone.
 
----
+**Accessibility**
 
-## Appendix – Scripts & Useful URLs
+- Menu items and tabs are real buttons with `aria-expanded` and `aria-controls`; drawers are labelled dialogs.
+- Visible focus outline on every link and button; the search field and icon-only buttons have accessible names.
+- External links announce "opens in a new window" to screen readers.
+- Text on black and yellow meets WCAG AA contrast (black on #ffcd11, white on #000).
 
-| Script | Purpose |
-|---|---|
-| `cat-sitewide-unminified.js` | Crawls the sitemap and lists served `.min` JS/CSS that are not minified |
-| `cat-html-compression-check.js` | Crawls the sitemap and records `Content-Encoding` per page (full URL, sizes) |
-| `cat-html-minify-audit.js` | HTML minification saving per page and template |
-| `html-minify-filter/` | Sling filter POC (HTML + dynamic CSS) |
+**Performance**
 
-| Purpose | URL (author) |
-|---|---|
-| HTML Library Manager | `/system/console/configMgr` → Adobe Granite HTML Library Manager |
-| Rebuild clientlibs | `/libs/granite/ui/content/dumplibs.rebuild.html` |
-| GCC errors | `/system/console/slinglog/tailer.txt?tail=20000&grep=GCCScriptProcessor&name=%2Flogs%2Ferror.log` |
+- The header loads after the page's largest content, as the boilerplate does, so it does not delay LCP.
+- Reserve the header height in `styles/styles.css` (120 px mobile, 133 px desktop) to avoid layout shift when it renders.
+- No libraries; icons are small SVG files fetched on demand.
+
+**Quality gates before release**
+
+- [ ] `npm run lint` passes (ESLint and Stylelint, boilerplate rules)
+- [ ] Lighthouse mobile and desktop at 100 on a page with the header
+- [ ] Keyboard-only walkthrough of every menu, tab and drawer
+- [ ] Screen reader check (NVDA on Windows, VoiceOver on iOS)
+- [ ] Chrome, Edge, Safari and Firefox at 375, 900, 1280 and 1920 px
+
+## Delivery plan
+
+Rough estimate: about 12 developer-days for one frontend developer, plus author review time. These are planning estimates, not commitments.
+
+| Phase | Work | Estimate (days) |
+| --- | --- | --- |
+| 1. Authoring contract | Agree the five-section nav document and formatting rules with authors; create the first `nav` document in da.live | 1 |
+| 2. Header shell | Two-row desktop and mobile top bar, logo, search form, tools links, design tokens | 2 |
+| 3. Menu panels | Desktop panels with tabs and side links; mobile drill-down with back rows | 3 |
+| 4. Drawers | Sign In, Cat Applications cards, region and language picker | 2 |
+| 5. Icons and fonts | Icon set in `/icons`; fonts if Noto Sans is required | 1 |
+| 6. Quality | Accessibility, Lighthouse, cross-browser and device checks; fixes | 2 |
+| 7. Handover | Author guide for the nav document; developer notes | 1 |
+
+Phases 2 to 4 can be demoed to authors after each one, so feedback lands before the quality phase.
+
+## Risks, gaps and open questions
+
+**Risks**
+
+| Risk | Impact | Mitigation |
+| --- | --- | --- |
+| Authors reorder or delete nav sections | Header renders in the wrong places | Author guide; a later version can name sections with Section Metadata instead of position |
+| The current boilerplate does not process Section Metadata | Named sections need extra code | Keep positional sections for version 1 |
+| Icon shortcodes (`:pin:`) or external logo images not converted on preview | Missing icons or logo | Check `nav.plain.html` after the first preview; place the logo image directly in da.live |
+| Styles estimated from screenshots | Small visual differences from cat.com | Get the design specs or the current header CSS values from the Cat team |
+| Header height grows from 64 px to 133 px | Layout shift on load | Reserve the height in `styles/styles.css` |
+
+**Open questions**
+
+- [ ] Which search results page and query parameter should the search form use?
+- [ ] What are the region and language URLs beyond North America English?
+- [ ] Should Sign In link to the existing account pages, or integrate with the identity provider?
+- [ ] Is Noto Sans required, or is the boilerplate font acceptable?
+- [ ] Is there an official Cat icon set to use instead of open-source icons?
+- [ ] Should external links open in a new window, as the icon suggests?
+- [ ] Who owns the `nav` document in da.live, and who can publish it?
