@@ -1,195 +1,132 @@
-# Cat.com Header on EDS: Implementation Analysis
+# Investigation: Salesforce Dynamic Form Error Styling vs Figma
 
-Oct 13, 2026 · Arka
+**Ticket:** AB#3275237 — FS | Investigation + Fix on error message from Salesforce mismatch to Figma expectation
+**Author:** Arkaprava Majumder
+**PRs:** #35129 (→ `development`, merged) · #35133 (→ `release`)
+**File changed:** `ui.apps/src/main/content/jcr_root/apps/deg/clientlibs/clientlib-site/css/auth-dynamic-forms.css`
 
-## Purpose and scope
+---
 
-Recommendation: rebuild the cat.com global header as one EDS `header` block that reads an author-owned `nav` document in Document Authoring (da.live). Authors then change menus, links and drawers without a code deploy. This is an analysis only; no build has started.
+## 1. Summary
 
-**In scope**
+The error state of the Salesforce dynamic forms (Request a Quote / Request a Price) did not match the Figma design. The required-field marker and the error message, icon and field border all differed.
 
-- Desktop and mobile header for the North America English site, matching cat.com's layout, colours and interactions
-- Search bar, utility links, Sign In, Cat Applications, region and language picker
-- Mega menu for Products, Industries, Finance, Support and Company
-- Authoring model, icons, design tokens, accessibility and performance targets
+The form **HTML markup and validation JS are owned and delivered by the Salesforce team**. The Cat team owns **only the CSS** (clientlib-site). So the fix was done **entirely in CSS on the Cat side**. No markup or JS changes were made or needed.
 
-**Out of scope**
+---
 
-- Search results page, sign-in and account integration, dealer locator
-- Footer, page templates, Cat AI Assistant chat
-- Region and language URLs for locales other than North America English
+## 2. Ownership
 
-## Current header on cat.com
+| Layer | Owner | Can Cat team change it? |
+|---|---|---|
+| Form HTML (fields, labels, error label elements) | Salesforce team | ❌ No |
+| Validation JS (`validateSubmit`, v3 jQuery Validate, v4 inline toggle) | Salesforce team | ❌ No |
+| Error message text ("Field is required") | Salesforce team / authored content | ❌ No |
+| Styling (`auth-dynamic-forms.css`, clientlib-site) | Cat team | ✅ Yes |
 
-The header is two black rows on desktop and a black top bar plus search row on mobile, with every menu opening as a white panel or side drawer. Observed on cat.com/en_US on 12 Oct 2026.
+---
 
-| Area | Desktop | Mobile |
-| --- | --- | --- |
-| Top row | CAT logo, wide search field with a yellow search button, Find Dealer, Sign In, Cat Applications (grid icon) | Hamburger, centred logo, person icon; search field on its own row below |
-| Main navigation | Second row: Products, Industries, Finance, Support, Company; Buy Parts and region on the right | Full-screen list with chevrons, Buy Parts, a divider, then Find Dealer, region and Cat Applications |
-| Open menu item | Yellow label, chevron up, 4 px yellow bar under the item | Drill-down to the next level |
-| Menu panel | White panel below the header: tabs on the left (Equipment, Power Systems, Attachments), links in three columns, side links on the right | Same content, one level per screen |
-| Side links | Used Equipment, Rental Equipment, Technology; links to other Cat sites carry an external icon | Same |
-| Cat Applications | Drawer from the right: icon, title, description and domain per app, Close button | Full-width drawer |
-| Region and language | Drawer: region select, language options with a check on the current one, Save and Cancel | Full-width drawer |
-| Colours | Black #000, yellow #ffcd11, white panels | Same |
+## 3. Current vs Expected (Figma)
 
-## Recommended approach
+| Element | Current (before fix) | Figma expectation |
+|---|---|---|
+| Required marker | Red `*` after label | Grey `(required)` text after label |
+| Error message | ⚠ triangle icon + "Field is required" | Red text, no leading icon |
+| Invalid field border | Default grey | 2px red border |
+| Invalid field icon | None | Red diamond "!" icon inside field, right-aligned |
+| Select (invalid) | Default | Red border + icon left of the chevron |
+| Focus on invalid field | Browser/site focus glow | Red border, no glow |
 
-Use the boilerplate's pattern: the `header` block loads the `nav` document as a fragment and turns its lists into the header. Content and code change independently, which is what makes it authorable.
+---
 
-```mermaid
-flowchart LR
-  subgraph Content["Content, owned by authors"]
-    A["Author edits<br/>nav doc in da.live"] --> B["Preview, publish<br/>from the da.live editor"] --> C["nav.plain.html<br/>on aem.page / aem.live"]
-  end
-  subgraph Code["Code, owned by developers"]
-    D["Developer pushes<br/>header.js, header.css, /icons"] --> E["AEM Code Sync<br/>deploys on push"] --> F["Block code live<br/>same branch URLs"]
-  end
-  C --> G["Visitor's browser<br/>header block loads nav,<br/>builds menus, panels and drawers"]
-  F --> G
+## 4. Findings (from DevTools)
+
+### 4.1 Markup (Salesforce-rendered)
+```html
+<div class="col-xs-12">
+  <label for="lastName">Last Name <span class="red">*</span></label>
+  <input type="text" id="lastName" class="required" onblur="validateSubmit(event)">
+  <label id="error-msg-lastName-required" class="error" style="display: block;">Field is required</label>
+  <label id="error-msg-lastName-invalidChar" style="display: none;">Enter a valid last name.</label>
+</div>
 ```
 
-Why this over the alternatives:
+- The required marker is a `<span class="red">*</span>` inside the label.
+- Error labels are siblings of the input in the same `.col-xs-12`.
+- No class or `aria-invalid` is added to the invalid **input** in the v4 validator. Only the error label's inline `display` changes.
+- The invalid-character label has **no `.error` class**.
 
-- **Hard-coded header in JavaScript**: every link change needs a developer and a deploy.
-- **One custom block per menu**: authors would edit block tables, which is harder than nested lists and splits the header across documents.
-- **Universal Editor with component models**: possible later, but needs AEM authoring setup; Document Authoring is enough for a list-shaped header.
+### 4.2 Two validator variants
+- **v4:** toggles inline `style="display: block | none"` on pre-rendered `error-msg-*` labels.
+- **v3 (`auth-dynamic-forms-v3.js`, jQuery Validate):** inserts `<label class="error">` dynamically (no inline style when visible, `display: none` when cleared) and sets `aria-invalid="true"` on the input.
 
-Files involved: `blocks/header/header.js`, `blocks/header/header.css`, SVGs in `/icons`, one height rule in `styles/styles.css`, and the `nav` document in da.live.
+The CSS has to work for **both** without relying on JS changes.
 
-## Authoring model
+### 4.3 AEM clientlib minifier issue
+An SVG icon embedded as a URL-encoded data URI broke after minification. The minifier **strips spaces inside the URL string** (`<svg xmlns=…` → `<svgxmlns=…`), which makes the SVG invalid. Fixed by switching to a **base64** data URI.
 
-Authors maintain one `nav` document in da.live with five sections, separated by section breaks, in a fixed order. The header code reads sections by position, so authors must not reorder or delete them.
+---
 
-| # | Section | What authors put in it |
-| --- | --- | --- |
-| 1 | Brand | Logo image, then a link to the home page |
-| 2 | Search | One link to the search results page, for example `/search?q=` (the parameter name is taken from the link) |
-| 3 | Tools | Find Dealer link; Sign In and Cat Applications as labels with a nested list, which open drawers |
-| 4 | Main navigation | Products, Industries, Finance, Support, Company as labels with nested lists; Buy Parts as a plain link |
-| 5 | Region | One label (North America-English) with nested regions, each holding its language links |
+## 5. Solution (CSS only)
 
-Formatting carries behaviour, so authors need no tables or block names:
+All rules are scoped to `.auth .auth-dynamic-forms` so they apply only to the Salesforce dynamic forms.
 
-| Authoring | Result |
-| --- | --- |
-| Nested list under a menu label | Opens a menu panel |
-| Third list level (Equipment, Power Systems) | Becomes a tab inside the panel |
-| *Italic* link in a menu | Moves to the side-links column |
-| `:pin:`, `:globe:`, `:apps:` | Icon from the `/icons` folder in code |
-| **Bold** tools label | Stays in the mobile top bar as an icon (Sign In) |
-| *Italic* tools label | Shows only its icon on desktop (Cat Applications) |
-| **Bold** link inside a drawer | Button (first one yellow) |
-| Link, line break, text inside a drawer | Card with title, description and domain |
-| Link to a host other than the home page | External icon, opens in a new window |
+### 5.1 Detecting the error state without JS hooks
+The error state is detected from the **visible error label** in the same field container, using `:has()`:
 
-A page can point to a different nav document through `nav` page metadata, which allows locale-specific navigation later.
+```css
+.col-xs-12:has(> label:is(.error, [id^="error-msg-"]):not([style*="none"]))
+```
 
-## Component behaviour
+- Covers v4 (inline toggle) and v3 (dynamically inserted `label.error`).
+- Covers both `required` and `invalidChar` messages.
+- Doesn't depend on the exact `display: block` value.
 
-The breakpoint is 900 px, the boilerplate default; below it the mobile layout applies.
+A fallback `[aria-invalid="true"]` selector covers v3 when the error label is placed outside the container.
 
-**Desktop (900 px and wider)**
+### 5.2 What the CSS does
+1. **Error text:** red (`#c52320`), legacy triangle icon hidden (`label.error::before`).
+2. **Invalid input/textarea:** 2px red border (`#de2222`) and a red diamond icon (base64 SVG) on the right.
+3. **Invalid select:** same border, with the icon placed left of the chevron.
+4. **Focus when invalid:** red border kept; default glow removed.
+5. **Required marker:** the `*` is visually hidden (`font-size: 0`) and replaced with grey `(required)` via `::after`, scoped to English pages with `:lang(en)`.
+6. Checkbox, radio and hidden inputs are excluded from the error icon.
 
-- Menu items open on click; one panel is open at a time.
-- Inside a tabbed panel, the first tab is active on open; hovering, focusing or clicking another tab switches it.
-- A click outside the header, tabbing out of it, or Escape closes the panel. Escape returns focus to the menu item.
-- Tools labels open drawers; links go straight to their page.
+---
 
-**Mobile (below 900 px)**
+## 6. Limitations (because only CSS can be changed)
 
-- The hamburger opens a full-screen menu and locks page scrolling; the search row hides.
-- Each level slides over the previous one with a back row at the top (Products, then Equipment, then its links).
-- Escape goes back one level, then closes the menu.
-- Sign In stays in the top bar as an icon.
+| Limitation | Impact | Needs |
+|---|---|---|
+| `(required)` text is in CSS | Can't be translated; scoped to `:lang(en)`, so other locales keep `*` | Salesforce markup change or i18n string in HTML |
+| Error message copy ("Field is required" vs Figma "This field is required.") | Can't change text from CSS | Salesforce / content update |
+| Error state detected via `:has()` and inline style | Depends on current markup structure; needs Chrome 105+, Safari 15.4+, Firefox 121+ | Salesforce JS adding `aria-invalid` / an error class on the field |
+| v4 inputs have no `aria-invalid` / `aria-describedby` | Screen readers don't announce the error state | Salesforce JS / markup change |
 
-**Drawers (both)**
+---
 
-- Built on the native `dialog` element: it traps focus, Escape closes it, and focus returns to the opener.
-- A click on the dimmed backdrop closes it.
-- The region picker shows the languages of the selected region; Save goes to the chosen language's URL, Cancel closes.
-- 480 px wide on desktop, full width on mobile; slides in from the right unless the user prefers reduced motion.
+## 7. Recommendations for the Salesforce team
 
-## Styling
+To make this robust, accessible and localizable, the Salesforce team could:
 
-All header colours and sizes live as CSS custom properties at the top of `header.css`, scoped to `header`, so a theme change is one edit. Sizes are estimated from screenshots, not measured from cat.com's stylesheet.
+1. Set `aria-invalid="true|false"` on the input when validation runs (v4).
+2. Add `aria-describedby="error-msg-<field>-required"` on each input.
+3. Render the required marker as translatable text (for example `<span class="required-text">(required)</span>`) instead of `*`.
+4. Update error message copy to match Figma, if required.
 
-| Token | Value | Used for |
-| --- | --- | --- |
-| `--header-black` | #000 | Header rows, text on white |
-| `--header-yellow` | #ffcd11 | Search button, open item, active tab, primary buttons |
-| `--header-white` | #fff | Panels, drawers, search field |
-| `--header-line` | #d9d9d9 | Dividers on white |
-| `--header-line-dark` | #333 | Line between the two desktop rows |
-| `--header-link` | #0067b8 | Domains and text links in drawers (assumed) |
-| `--header-bar-height` | 64 px mobile, 88 px desktop | Top row |
-| `--header-nav-height` | 44 px | Desktop main navigation row |
-| `--header-search-height` | 44 px | Search field and button |
+Once 1 and 3 are done, the Cat CSS can be simplified to use `[aria-invalid="true"]` and drop the `:has()` and `::after` workarounds.
 
-- **Fonts**: the boilerplate's self-hosted Roboto for text and Roboto Condensed for drawer titles. cat.com's body text appears to be Noto Sans; matching it means adding self-hosted Noto Sans files to `/fonts`.
-- **Icons**: SVG files in `/icons`, drawn through a CSS mask so they take the text colour (white on black, black on white). 14 icons are needed: search, pin, person, apps, globe, external, close, settings, cart, box, tag, clock, truck, dollar. Open-source sets (Material Icons, Apache 2.0; Feather, MIT) cover them; the client's own icon set should replace them if one exists.
-- **Logo**: the client's logo image, placed by authors in the brand section.
+---
 
-## Accessibility, performance and quality gates
+## 8. Testing checklist
 
-The header must not cost the page its Lighthouse 100, and must be usable by keyboard and screen reader alone.
-
-**Accessibility**
-
-- Menu items and tabs are real buttons with `aria-expanded` and `aria-controls`; drawers are labelled dialogs.
-- Visible focus outline on every link and button; the search field and icon-only buttons have accessible names.
-- External links announce "opens in a new window" to screen readers.
-- Text on black and yellow meets WCAG AA contrast (black on #ffcd11, white on #000).
-
-**Performance**
-
-- The header loads after the page's largest content, as the boilerplate does, so it does not delay LCP.
-- Reserve the header height in `styles/styles.css` (120 px mobile, 133 px desktop) to avoid layout shift when it renders.
-- No libraries; icons are small SVG files fetched on demand.
-
-**Quality gates before release**
-
-- [ ] `npm run lint` passes (ESLint and Stylelint, boilerplate rules)
-- [ ] Lighthouse mobile and desktop at 100 on a page with the header
-- [ ] Keyboard-only walkthrough of every menu, tab and drawer
-- [ ] Screen reader check (NVDA on Windows, VoiceOver on iOS)
-- [ ] Chrome, Edge, Safari and Firefox at 375, 900, 1280 and 1920 px
-
-## Delivery plan
-
-Rough estimate: about 12 developer-days for one frontend developer, plus author review time. These are planning estimates, not commitments.
-
-| Phase | Work | Estimate (days) |
-| --- | --- | --- |
-| 1. Authoring contract | Agree the five-section nav document and formatting rules with authors; create the first `nav` document in da.live | 1 |
-| 2. Header shell | Two-row desktop and mobile top bar, logo, search form, tools links, design tokens | 2 |
-| 3. Menu panels | Desktop panels with tabs and side links; mobile drill-down with back rows | 3 |
-| 4. Drawers | Sign In, Cat Applications cards, region and language picker | 2 |
-| 5. Icons and fonts | Icon set in `/icons`; fonts if Noto Sans is required | 1 |
-| 6. Quality | Accessibility, Lighthouse, cross-browser and device checks; fixes | 2 |
-| 7. Handover | Author guide for the nav document; developer notes | 1 |
-
-Phases 2 to 4 can be demoed to authors after each one, so feedback lands before the quality phase.
-
-## Risks, gaps and open questions
-
-**Risks**
-
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Authors reorder or delete nav sections | Header renders in the wrong places | Author guide; a later version can name sections with Section Metadata instead of position |
-| The current boilerplate does not process Section Metadata | Named sections need extra code | Keep positional sections for version 1 |
-| Icon shortcodes (`:pin:`) or external logo images not converted on preview | Missing icons or logo | Check `nav.plain.html` after the first preview; place the logo image directly in da.live |
-| Styles estimated from screenshots | Small visual differences from cat.com | Get the design specs or the current header CSS values from the Cat team |
-| Header height grows from 64 px to 133 px | Layout shift on load | Reserve the height in `styles/styles.css` |
-
-**Open questions**
-
-- [ ] Which search results page and query parameter should the search form use?
-- [ ] What are the region and language URLs beyond North America English?
-- [ ] Should Sign In link to the existing account pages, or integrate with the identity provider?
-- [ ] Is Noto Sans required, or is the boilerplate font acceptable?
-- [ ] Is there an official Cat icon set to use instead of open-source icons?
-- [ ] Should external links open in a new window, as the icon suggests?
-- [ ] Who owns the `nav` document in da.live, and who can publish it?
+- [ ] v4 form: submit empty → red border, icon and red error text on all required fields
+- [ ] v4 form: invalid characters → same error styling
+- [ ] v3 form (jQuery Validate): submit empty → error styling applies
+- [ ] Fill the fields → error styling clears
+- [ ] Select dropdown: icon and chevron both visible in error state
+- [ ] Checkbox ("no business name"): no error icon
+- [ ] Focus on invalid field: red border, no glow
+- [ ] English page: `(required)` shown and baseline-aligned with label
+- [ ] Non-English page: `*` still shown
+- [ ] Author and publish (QA) both verified after clientlib minification
