@@ -3,6 +3,11 @@ history.replaceState(null, "", location.href.split("?")[0]);
 var $modal = $('#build-price-modal-productHero');
 
 function doRedirect() {
+  // remove modal + Bootstrap leftovers
+  $modal.remove();
+  $('.modal-backdrop').remove();
+  $('body').removeClass('modal-open').css({ overflow: '', paddingRight: '' });
+
   var a = document.createElement('a');
   a.href = redirectUrl;
   a.referrerPolicy = 'no-referrer';
