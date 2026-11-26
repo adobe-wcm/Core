@@ -12,3 +12,13 @@ const rt = 'deg/components/content/product/editable/common/non-pim/productBanner
     .then(r => r.json())
     .then(d => console.log(path, d.total, [...new Set(d.hits.map(h => h['jcr:path'].split('/jcr:content')[0]))]))
 );
+
+
+const base = 'deg/components/content/product/editable/common/non-pim/productBanners/';
+fetch(`/bin/querybuilder.json?path=/content&property=sling:resourceType&property.value=${encodeURIComponent(base + '%')}&property.operation=like&p.limit=-1&p.hits=selective&p.properties=jcr:path%20sling:resourceType`)
+  .then(r => r.json())
+  .then(d => {
+    const m = {};
+    d.hits.forEach(h => (m[h['sling:resourceType']] ||= new Set()).add(h['jcr:path'].split('/jcr:content')[0]));
+    Object.entries(m).forEach(([rt, pages]) => console.log(rt, pages.size, [...pages]));
+  });
