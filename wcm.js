@@ -5,6 +5,14 @@ WHERE ISDESCENDANTNODE(page, '/content/catdotcom/en_US/products')
 AND c.[sling:resourceType] LIKE 'deg/components/content/product/editable/common/non-pim/productBanners/%'
 
 
+const base = 'deg/components/content/product/common/non-pim/chat/';
+fetch(`/bin/querybuilder.json?path=/content&property=sling:resourceType&property.value=${encodeURIComponent(base + '%')}&property.operation=like&p.limit=-1&p.hits=selective&p.properties=jcr:path%20sling:resourceType`)
+  .then(r => r.json())
+  .then(d => {
+    const m = {};
+    d.hits.forEach(h => (m[h['sling:resourceType']] ||= new Set()).add(h['jcr:path'].split('/jcr:content')[0]));
+    Object.entries(m).forEach(([rt, pages]) => console.log(rt, pages.size, [...pages]));
+  });
 
 const rt = 'deg/components/content/product/editable/common/non-pim/productBanners/v1/productBanners';
 ['/content/catdotcom/en_US', '/content/experience-fragments'].forEach(path =>
