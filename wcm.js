@@ -22,3 +22,17 @@ fetch(`/bin/querybuilder.json?path=/content&property=sling:resourceType&property
     d.hits.forEach(h => (m[h['sling:resourceType']] ||= new Set()).add(h['jcr:path'].split('/jcr:content')[0]));
     Object.entries(m).forEach(([rt, pages]) => console.log(rt, pages.size, [...pages]));
   });
+
+
+const rt = 'deg/components/content/product/editable/common/non-pim/productBanners/productBanners';
+const marker = 'productBanners/v2/productBanners/clientlibs';
+const d = await (await fetch(`/bin/querybuilder.json?path=/content/catdotcom/en_US/products&property=sling:resourceType&property.value=${rt}&p.limit=-1&p.hits=selective&p.properties=jcr:path`)).json();
+const pages = [...new Set(d.hits.map(h => h['jcr:path'].split('/jcr:content')[0]))];
+console.log(pages.length + ' candidate pages');
+const found = [];
+for (const p of pages) {
+  if (found.length >= 5) break;
+  const html = await (await fetch(p + '.html?wcmmode=disabled')).text();
+  if (html.includes(marker)) { found.push(location.origin + p + '.html?wcmmode=disabled'); console.log('✔', p); }
+}
+console.log(found.join('\n'));
