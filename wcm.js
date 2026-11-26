@@ -3,3 +3,12 @@ INNER JOIN [cq:PageContent] AS content ON ISCHILDNODE(content, page)
 INNER JOIN [nt:unstructured] AS c ON ISDESCENDANTNODE(c, content)
 WHERE ISDESCENDANTNODE(page, '/content/catdotcom/en_US/products')
 AND c.[sling:resourceType] LIKE 'deg/components/content/product/editable/common/non-pim/productBanners/%'
+
+
+
+const rt = 'deg/components/content/product/editable/common/non-pim/productBanners/v1/productBanners';
+['/content/catdotcom/en_US', '/content/experience-fragments'].forEach(path =>
+  fetch(`/bin/querybuilder.json?path=${path}&property=sling:resourceType&property.value=${rt}&p.limit=-1&p.hits=selective&p.properties=jcr:path`)
+    .then(r => r.json())
+    .then(d => console.log(path, d.total, [...new Set(d.hits.map(h => h['jcr:path'].split('/jcr:content')[0]))]))
+);
