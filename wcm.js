@@ -1,3 +1,23 @@
+const base = 'deg/components/content/product/editable/detail/non-pim/productDetailsSpecification/';
+const marker = 'productDetailsSpecification/v1/productDetailsSpecification/clientlibs';
+
+const d = await (await fetch(`/bin/querybuilder.json?path=/content/catdotcom/en_US&property=sling:resourceType&property.value=${encodeURIComponent(base + '%')}&property.operation=like&p.limit=-1&p.hits=selective&p.properties=jcr:path%20sling:resourceType`)).json();
+
+const m = {};
+d.hits.forEach(h => (m[h['sling:resourceType']] ||= new Set()).add(h['jcr:path'].split('/jcr:content')[0]));
+Object.entries(m).forEach(([rt, p]) => console.log(rt, p.size));
+
+const pages = [...new Set(Object.values(m).flatMap(s => [...s]))];
+const found = [];
+for (const p of pages) {
+  if (found.length >= 5) break;
+  const html = await (await fetch(p + '.html?wcmmode=disabled')).text();
+  if (html.includes(marker)) { found.push(location.origin + p + '.html?wcmmode=disabled'); console.log('✔', p); }
+}
+console.log(found.length ? found.join('\n') : 'No page loads the v1 script');
+
+
+
 SELECT page.* FROM [cq:Page] AS page
 INNER JOIN [cq:PageContent] AS content ON ISCHILDNODE(content, page)
 INNER JOIN [nt:unstructured] AS c ON ISDESCENDANTNODE(c, content)
